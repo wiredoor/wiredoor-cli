@@ -27,14 +27,14 @@ sudo dpkg -i wiredoor_1.0.0-1_debian_amd64.deb
 ### RHEL / Fedora / CentOS
 
 ```bash
-wget https://github.com/YOUR_USERNAME/wiredoor-cli/releases/download/v1.0.0/wiredoor_1.0.0-1_rpm_amd64.rpm
+wget https://github.com/wiredoor/wiredoor-cli/releases/download/v1.0.0/wiredoor_1.0.0-1_rpm_amd64.rpm
 sudo rpm -i wiredoor_1.0.0-1_rpm_amd64.rpm
 ```
 
 ### Alpine Linux
 
 ```bash
-wget https://github.com/YOUR_USERNAME/wiredoor-cli/releases/download/v1.0.0/wiredoor_1.0.0-1_alpine_amd64.apk
+wget https://github.com/wiredoor/wiredoor-cli/releases/download/v1.0.0/wiredoor_1.0.0-1_alpine_amd64.apk
 sudo apk add --allow-untrusted wiredoor_1.0.0-1_alpine_amd64.apk
 ```
 
