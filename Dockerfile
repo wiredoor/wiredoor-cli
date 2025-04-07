@@ -5,11 +5,12 @@ FROM golang:1.23-alpine AS builder
 WORKDIR /app
 
 ARG TARGETARCH
+ENV GOARCH=$TARGETARCH
 
 COPY . .
 
 RUN go mod download && \
-  CGO_ENABLED=0 GOOS=linux GOARCH=$(TARGETARCH) go build -o bin/wiredoor
+  CGO_ENABLED=0 GOOS=linux GOARCH=$GOARCH go build -o bin/wiredoor
 
 FROM alpine:3.21 AS production
 
