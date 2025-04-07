@@ -35,12 +35,12 @@ build-apk:
 	GOOS=linux GOARCH=amd64 go build -ldflags "-X 'github.com/wiredoor/wiredoor-cli/cmd.Version=${VERSION}'" -o bin/wiredoor-linux-amd64
 	fpm -s dir -t apk -v ${VERSION} -a amd64 \
 		--depends "iptables, wireguard-tools, iproute2" \
-		-p ${OUT_PATH}/wiredoor_${VERSION}_alpine_amd64.apk \
+		-p ${OUT_PATH}/wiredoor_${VERSION}-1_alpine_amd64.apk \
 		bin/wiredoor-linux-amd64=/usr/bin/wiredoor \
 		etc/init.d/wiredoor.init=/etc/init.d/wiredoor
 	GOOS=linux GOARCH=arm64 go build -ldflags "-X 'github.com/wiredoor/wiredoor-cli/cmd.Version=${VERSION}'" -o bin/wiredoor-linux-arm64
 	fpm -s dir -t apk -v ${VERSION} -a arm64 \
 		--depends "iptables, wireguard-tools, iproute2" \
-		-p ${OUT_PATH}/wiredoor_${VERSION}_alpine_arm64.apk \
+		-p ${OUT_PATH}/wiredoor_${VERSION}-1_alpine_arm64.apk \
 		bin/wiredoor-linux-arm64=/usr/bin/wiredoor \
 		etc/init.d/wiredoor.init=/etc/init.d/wiredoor

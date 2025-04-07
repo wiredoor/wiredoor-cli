@@ -1,4 +1,4 @@
-# Wiredoor CLI COmmand Reference
+# Wiredoor CLI Command Reference
 
 `wiredoor-cli` is a lightweight command-line client written in Go, designed to interact with the Wiredoor Server.
 
@@ -14,7 +14,29 @@ This CLI is especially useful for nodes running in headless environments (e.g., 
 
 ## Installation
 
-Download the latest release from the [Releases](https://github.com/wiredoor/wiredoor-cli/releases) page
+You can install wiredoor-cli from prebuilt packages or use the multi-arch Docker image. 
+Pick the method that suits your platform from the [Releases](https://github.com/wiredoor/wiredoor-cli/releases) page:
+
+### Debian/Ubuntu
+
+```bash
+wget https://github.com/wiredoor/wiredoor-cli/releases/download/v1.0.0/wiredoor_1.0.0-1_debian_amd64.deb
+sudo dpkg -i wiredoor_1.0.0-1_debian_amd64.deb
+```
+
+### RHEL / Fedora / CentOS
+
+```bash
+wget https://github.com/YOUR_USERNAME/wiredoor-cli/releases/download/v1.0.0/wiredoor_1.0.0-1_rpm_amd64.rpm
+sudo rpm -i wiredoor_1.0.0-1_rpm_amd64.rpm
+```
+
+### Alpine Linux
+
+```bash
+wget https://github.com/YOUR_USERNAME/wiredoor-cli/releases/download/v1.0.0/wiredoor_1.0.0-1_alpine_amd64.apk
+sudo apk add --allow-untrusted wiredoor_1.0.0-1_alpine_amd64.apk
+```
 
 ### Login and Create Node
 
