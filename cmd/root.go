@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var Version = "1.0.0"
@@ -21,6 +22,15 @@ var rootCmd = &cobra.Command{
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
+		hasFlags := false
+		cmd.Flags().Visit(func(f *pflag.Flag) {
+			hasFlags = true
+		})
+
+		if len(args) == 0 && !hasFlags {
+			_ = cmd.Help()
+			return
+		}
 		if showVersion {
 			fmt.Printf("Wiredoor CLI version: %s\n", Version)
 			os.Exit(0)
