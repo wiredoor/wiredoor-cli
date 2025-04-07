@@ -1,0 +1,20 @@
+#!/sbin/openrc-run
+
+# OpenRC service for Wiredoor CLI
+
+command="/usr/bin/wiredoor"
+command_args="status --watch --interval 10"
+command_background="yes"
+pidfile="/var/run/wiredoor.pid"
+name="wiredoor"
+
+description="Wiredoor CLI VPN tunnel watchdog"
+
+depend() {
+    need net
+    after firewall
+}
+
+start_pre() {
+    checkpath --directory --mode 0755 /var/run
+}

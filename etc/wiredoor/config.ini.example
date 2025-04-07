@@ -1,0 +1,25 @@
+[server]
+;Wiredoor Server URL or IP (e.g. https://wiredoor.example.com)
+url = 
+;Node Personal Access Token.
+;Go to the Wiredoor Server Admin Panel and create a node to get one.
+token = 
+;API base path on the Wiredoor server (default: /)
+path = /
+
+[client]
+;Persistent KeepAlive value for WireGuard (in seconds)
+keepalive = 25
+
+[daemon]
+;Enable daemon mode to run 'wiredoor status --health --watch 10' as a systemd service.
+;This ensures the node stays connected automatically across system reboots and network interruptions.
+;
+;When enabled, Wiredoor runs in the background and:
+;  - Automatically connects on boot using saved configuration
+;  - Re-establishes the VPN if the tunnel is dropped
+;  - Syncs with the Wiredoor server and responds to remote connect/disconnect commands
+;
+;This allows node connectivity to be controlled directly from the Wiredoor Server UI.
+;Useful for IoT, edge systems, or unattended environments.
+enabled = false

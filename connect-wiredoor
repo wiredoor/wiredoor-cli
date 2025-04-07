@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -m
+
+if [ ! -c /dev/net/tun ]; then
+  mkdir -p /dev/net
+  mknod /dev/net/tun c 10 200
+fi
+
+dnsmasq --server=127.0.0.11 --listen-address=0.0.0.0 --bind-interfaces
+
+wiredoor connect --server "${WIREDOOR_URL}" --token "${TOKEN}"
+
+tcpdump -i wg0

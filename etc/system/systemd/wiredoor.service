@@ -1,0 +1,11 @@
+[Unit]
+Description=Wiredoor Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/wiredoor status --watch --interval 10
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

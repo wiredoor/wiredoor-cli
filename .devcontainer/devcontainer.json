@@ -1,0 +1,23 @@
+{
+  "name": "Wiredoor-CLI-Dev-Container",
+  "image": "golang:1.23-bookworm",
+  "overrideCommand": true,
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.Go",
+        "ms-vscode.go"
+      ],
+      "settings": {
+        "go.toolsManagement.autoUpdate": true,
+        "go.useLanguageServer": true
+      }
+    }
+  },
+  "runArgs": ["--label", "net.wiredoor.container=wiredoor-cli-dev"],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "postCreateCommand": "apt update && apt install -y ruby ruby-dev build-essential iptables wireguard-tools tcpdump iproute2 dnsmasq rpm make && gem install --no-document fpm && go mod tidy",
+  "remoteUser": "root",
+  "capAdd": [ "NET_ADMIN" ]
+}

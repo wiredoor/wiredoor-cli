@@ -1,0 +1,10 @@
+--name "wiredoor"
+--description "Ingress as a service system CLI"
+--after-install pkg/postinstall.sh
+--before-remove pkg/preuninstall.sh
+--config-files /etc/wiredoor/config.ini
+--license "MIT"
+--url "https://www.wiredoor.net"
+--maintainer "Daniel Mesa <dmesa@infladoor.com>"
+--vendor "Infladoor LLC"
+etc/wiredoor/config.ini.example=/etc/wiredoor/config.ini

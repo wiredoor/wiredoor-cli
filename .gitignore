@@ -1,0 +1,8 @@
+bin
+dist
+etc/wiredoor/config.ini
+*.deb
+*.apk
+*.rpm
+*.pkg
+*.exe
