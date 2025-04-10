@@ -1,11 +1,14 @@
 # Wiredoor CLI Command Reference
 
-`wiredoor-cli` is a lightweight command-line client written in Go, designed to interact with the Wiredoor Server.
+[Wiredoor CLI](https://github.com/wiredoor/wiredoor-cli)  is the command-line interface for interacting with the Wiredoor platform. 
+It provides a simple and secure way to register nodes, expose services, and manage connectivity directly from the terminal.
 
 It allows you to:
 
-- Connect your node to the VPN
-- Expose or unexpose services
+- Easily connect to new node in Wiredoor using admin credentials.
+- Quickly connect a private machine to the Wiredoor network without complex configuration.
+- Expose HTTP or TCP services running on your local/private network with just one command.
+- Enable or disable services on the fly
 - Check VPN status and connection logs
 - Automate service exposure on boot
 - Authenticate via token-based access
@@ -38,6 +41,8 @@ wget https://github.com/wiredoor/wiredoor-cli/releases/download/v1.0.0/wiredoor_
 sudo apk add --allow-untrusted wiredoor_1.0.0-1_alpine_amd64.apk
 ```
 
+## Command reference
+
 ### Login and Create Node
 
 The fastest way to onboard a new system as a node. Authenticate with a Wiredoor server using admin credentials and register this node via interactive prompts.
@@ -53,7 +58,7 @@ wiredoor login --url https://your-wiredoor-instance-or-ip
 
 This command retrieves and saves the node’s token to `/etc/wiredoor/config.ini` and connect to wiredoor server.
 
-### Connect
+### Connect to Wiredoor Node
 
 Establish a VPN connection using saved or provided credentials.
 
@@ -123,17 +128,6 @@ Flags:
 - `--watch`: Continuous monitoring
 - `--interval`: Poll interval (default: 5s)
 
-### Wiredoor disconnect
-
-Stop the active VPN tunnel and disable all services (temporarily).
-
-```bash
-wiredoor disconnect
-```
-
-- Does **not** delete the node configuration
-- Use before maintenance or to restart
-
 ### Wiredoor disable
 
 Temporarily disable an exposed service by name.
@@ -158,6 +152,40 @@ wiredoor enable tcp db-access
 - Restores service availability
 - Requires existing configuration
 
+### Wiredoor disconnect
 
+Stop the active VPN tunnel and disable all services (temporarily).
 
+```bash
+wiredoor disconnect
+```
 
+- Does **not** delete the node configuration
+- Use before maintenance or to restart
+
+## Systemd service
+
+If installed via package, Wiredoor includes a `systemd` service that runs a health-check in background to ensure persistent connectivity:
+
+- Reconnects automatically if connection drops
+- Verifies service exposure health every 15 seconds
+- Ideal for long-running nodes and production servers
+
+To run wiredoor service start and enable `wiredoor.service`:
+
+Systemd based systems:
+
+```bash
+sudo systemctl enable wiredoor
+sudo systemctl start wiredoor
+```
+
+OpenRC based systems (Alpine Linux):
+
+```bash
+chmod +x /etc/init.d/wiredoor
+rc-update add wiredoor
+rc-service wiredoor start
+```
+
+**This keeps the node online across reboots and network changes.**
