@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://docs.wiredoor.net">Documentation</a> •
+  <a href="https://www.wiredoor.net/docs">Documentation</a> •
   <a href="https://github.com/wiredoor/server">Core Server</a> •
   <a href="https://github.com/wiredoor/wiredoor-cli">CLI</a> •
   <a href="https://charts.wiredoor.net">Helm Charts</a>
