@@ -1,3 +1,23 @@
+<p align="center"> <img src="https://www.wiredoor.net/images/wiredoor.svg" alt="Wiredoor logo" width="60" /> </p>
+
+<h1 align="center" style="color:#1c398e">
+  Wiredoor
+</h1>
+
+<p align="center">
+  <strong>Expose private services securely through reverse VPN tunnel powered by WireGuard and NGINX.</strong><br />
+  Open-source | Self-hosted
+</p>
+
+<p align="center">
+  <a href="https://docs.wiredoor.net">Documentation</a> •
+  <a href="https://github.com/wiredoor/server">Core Server</a> •
+  <a href="https://github.com/wiredoor/wiredoor-cli">CLI</a> •
+  <a href="https://charts.wiredoor.net">Helm Charts</a>
+</p>
+
+---
+
 # Wiredoor CLI Command Reference
 
 [Wiredoor CLI](https://github.com/wiredoor/wiredoor-cli)  is the command-line interface for interacting with the Wiredoor platform. 
