@@ -5,9 +5,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	// "golang.zx2c4.com/wireguard/conn"
-	// "golang.zx2c4.com/wireguard/device"
-	// "golang.zx2c4.com/wireguard/tun"
 )
 
 // var interfaceName = "wg0"
@@ -26,6 +23,8 @@ type ConnectionConfig struct {
 // }
 
 func Connect(connection ConnectionConfig) {
+	ensureRoot()
+
 	if connection.URL != "" && connection.Token != "" {
 		SaveServerConfig(connection.URL, connection.Token)
 	}
@@ -50,7 +49,7 @@ func Connect(connection ConnectionConfig) {
 
 		Status()
 	} else {
-		log.Fatal("Unable to connect we can't communicate with wiredoor server")
+		fmt.Println("Error: Unable to connect we can't communicate with wiredoor server to get node configuration")
 	}
 }
 
@@ -59,7 +58,15 @@ func RestartTunnel() {
 }
 
 func Disconnect() {
+	ensureRoot()
 	manualLinuxDisconnect()
+}
+
+func ensureRoot() {
+	if os.Geteuid() != 0 {
+		fmt.Fprintln(os.Stderr, "Permission denied: root privileges are required (try with sudo)")
+		os.Exit(1)
+	}
 }
 
 func manualLinuxConnect() {
