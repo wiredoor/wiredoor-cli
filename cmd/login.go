@@ -40,6 +40,11 @@ Prompts will guide you through the registration and configuration process.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		url, _ := cmd.Flags().GetString("url")
 
+		if url == "" && !wiredoor.IsServerConfigSet() {
+			fmt.Println("You must define Wiredoor server URL. Please use flag --url and try again.")
+			return
+		}
+
 		if wiredoor.IsServerConfigSet() {
 			doContinue := false
 
