@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -m
-
 if [ ! -c /dev/net/tun ]; then
   mkdir -p /dev/net
   mknod /dev/net/tun c 10 200
