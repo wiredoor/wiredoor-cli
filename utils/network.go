@@ -3,7 +3,22 @@ package utils
 import (
 	"fmt"
 	"net"
+	"time"
 )
+
+func CheckPort(host string, port int) bool {
+	address := net.JoinHostPort(host, fmt.Sprintf("%d", port))
+	timeout := 2 * time.Second
+
+	conn, err := net.DialTimeout("tcp", address, timeout)
+	if err != nil {
+			fmt.Printf("Port %d is closed or unreachable: %v\n", port, err)
+			return false
+	}
+	defer conn.Close()
+
+	return true
+}
 
 func LocalTunnelIP() string {
 	iface, err := net.InterfaceByName("wg0")

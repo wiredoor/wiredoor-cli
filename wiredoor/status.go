@@ -66,12 +66,11 @@ func WireguardInterfaceExists() bool {
 func CheckWiredoorServer(debug bool) bool {
 	ip := utils.LocalServerIP()
 
-	config := GetApiConfig("https://" + ip)
-
-	if config.VPN_HOST == "" {
+	if !utils.CheckPort(ip, 443) {
 		return false
 	} else {
 		if debug {
+			config := GetApiConfig()
 			fmt.Println(" ✔ Connection successful to:", config.VPN_HOST)
 		}
 		return true

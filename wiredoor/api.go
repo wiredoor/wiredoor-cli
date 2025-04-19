@@ -279,8 +279,8 @@ func GetNodeConfig() string {
 	return ""
 }
 
-func GetApiConfig(url string) ApiConfig {
-	resp := requestApi(apiRequest{Server: url, Method: "GET", Path: "/config", Timeout: 5})
+func GetApiConfig() ApiConfig {
+	resp := requestApi(apiRequest{Method: "GET", Path: "/config", Timeout: 5})
 
 	if resp != nil {
 		config := ApiConfig{}
