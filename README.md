@@ -37,29 +37,13 @@ This CLI is especially useful for nodes running in headless environments (e.g., 
 
 ## Installation
 
-You can install wiredoor-cli from prebuilt packages or use the multi-arch Docker image. 
-Pick the method that suits your platform from the [Releases](https://github.com/wiredoor/wiredoor-cli/releases) page:
-
-### Debian/Ubuntu
+You can use the auto-installer:
 
 ```bash
-wget https://github.com/wiredoor/wiredoor-cli/releases/download/v1.0.0/wiredoor_1.0.0-1_debian_amd64.deb
-sudo apt install -f ./wiredoor_1.0.0-1_debian_amd64.deb
+curl -s https://www.wiredoor.net/install-wiredoor-cli.sh | sh
 ```
 
-### RHEL / Fedora / CentOS / AlmaLinux
-
-```bash
-wget https://github.com/wiredoor/wiredoor-cli/releases/download/v1.0.0/wiredoor_1.0.0-1_rpm_amd64.rpm
-sudo dnf install -y wiredoor_1.0.0-1_rpm_amd64.rpm
-```
-
-### Alpine Linux
-
-```bash
-wget https://github.com/wiredoor/wiredoor-cli/releases/download/v1.0.0/wiredoor_1.0.0-1_alpine_amd64.apk
-sudo apk add --allow-untrusted wiredoor_1.0.0-1_alpine_amd64.apk
-```
+Or download a package from [GitHub Releases](https://github.com/wiredoor/wiredoor-cli/releases).
 
 ## Command reference
 
