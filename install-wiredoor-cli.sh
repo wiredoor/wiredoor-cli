@@ -89,7 +89,7 @@ case "$OS" in
     rm -f /tmp/wiredoor.apk
     ;;
   archlinux)
-    URL="https://github.com/$REPO/releases/download/v$VERSION/wiredoor_${VERSION}-1_archlinux_${ARCH}.apk"
+    URL="https://github.com/$REPO/releases/download/v$VERSION/wiredoor_${VERSION}-1_archlinux_${ARCH}.pkg.tar.zst"
     curl -fsSL "$URL" -o /tmp/wiredoor.pkg.tar.zst
     $SUDO pacman -U /tmp/wiredoor.pkg.tar.zst
     rm -f /tmp/wiredoor.pkg.tar.zst
