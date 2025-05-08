@@ -1,58 +1,56 @@
 VERSION ?= 1.0.0
 OUT_PATH ?= dist
+BIN_PATH := bin
+PKG_NAME := wiredoor
+GO_MODULE := github.com/wiredoor/wiredoor-cli/cmd
+ARCHS := amd64 arm64
 
-build-pkgs: build-deb build-rpm build-apk
+build-pkgs: build-binaries build-deb build-rpm build-apk build-pacman
+
+build-binaries:
+	@mkdir -p $(BIN_PATH)
+	@$(foreach arch,$(ARCHS), \
+		echo "Building for $(arch)..."; \
+		CGO_ENABLED=0 GOOS=linux GOARCH=$(arch) go build \
+		-ldflags "-X '$(GO_MODULE).Version=$(VERSION)'" \
+		-o $(BIN_PATH)/$(PKG_NAME)-linux-$(arch);)
 
 build-deb:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X 'github.com/wiredoor/wiredoor-cli/cmd.Version=${VERSION}'" -o bin/wiredoor-linux-amd64
-	fpm -s dir -t deb -v ${VERSION} -a amd64 \
-		--depends iptables \
-		--depends wireguard-tools \
-		--depends iproute2 \
-		-p ${OUT_PATH}/wiredoor_${VERSION}-1_debian_amd64.deb \
-		bin/wiredoor-linux-amd64=/usr/bin/wiredoor \
-		etc/system/systemd/wiredoor.service=/lib/systemd/system/wiredoor.service
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "-X 'github.com/wiredoor/wiredoor-cli/cmd.Version=${VERSION}'" -o bin/wiredoor-linux-arm64
-	fpm -s dir -t deb -v ${VERSION} -a arm64 \
-		--depends iptables \
-		--depends wireguard-tools \
-		--depends iproute2 \
-		-p ${OUT_PATH}/wiredoor_${VERSION}-1_debian_arm64.deb \
-		bin/wiredoor-linux-arm64=/usr/bin/wiredoor \
-		etc/system/systemd/wiredoor.service=/lib/systemd/system/wiredoor.service
+	@$(foreach arch,$(ARCHS), \
+		fpm -s dir -t deb -v $(VERSION) -a $(arch) \
+			--depends iptables \
+			--depends wireguard-tools \
+			--depends iproute2 \
+			-p $(OUT_PATH)/$(PKG_NAME)_$(VERSION)-1_debian_$(arch).deb \
+			$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)=/usr/bin/$(PKG_NAME) \
+			etc/system/systemd/$(PKG_NAME).service=/lib/systemd/system/$(PKG_NAME).service;)
 
 build-rpm:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X 'github.com/wiredoor/wiredoor-cli/cmd.Version=${VERSION}'" -o bin/wiredoor-linux-amd64
-	fpm -s dir -t rpm -v ${VERSION} -a amd64 \
-		--depends iptables \
-		--depends wireguard-tools \
-		--depends iproute \
-		-p ${OUT_PATH}/wiredoor_${VERSION}-1_rpm_amd64.rpm \
-		bin/wiredoor-linux-amd64=/usr/bin/wiredoor \
-		etc/system/systemd/wiredoor.service=/usr/lib/systemd/system/wiredoor.service
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "-X 'github.com/wiredoor/wiredoor-cli/cmd.Version=${VERSION}'" -o bin/wiredoor-linux-arm64
-	fpm -s dir -t deb -v ${VERSION} -a arm64 \
-		--depends iptables \
-		--depends wireguard-tools \
-		--depends iproute \
-		-p ${OUT_PATH}/wiredoor_${VERSION}-1_rpm_arm64.rpm \
-		bin/wiredoor-linux-arm64=/usr/bin/wiredoor \
-		etc/system/systemd/wiredoor.service=/usr/lib/systemd/system/wiredoor.service
+	@$(foreach arch,$(ARCHS), \
+		fpm -s dir -t rpm -v $(VERSION) -a $(arch) \
+			--depends iptables \
+			--depends wireguard-tools \
+			--depends iproute \
+			-p $(OUT_PATH)/$(PKG_NAME)_$(VERSION)-1_rpm_$(arch).rpm \
+			$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)=/usr/bin/$(PKG_NAME) \
+			etc/system/systemd/$(PKG_NAME).service=/usr/lib/systemd/system/$(PKG_NAME).service;)
 
 build-apk:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X 'github.com/wiredoor/wiredoor-cli/cmd.Version=${VERSION}'" -o bin/wiredoor-linux-amd64
-	fpm -s dir -t apk -v ${VERSION} -a amd64 \
-		--depends iptables \
-		--depends wireguard-tools \
-		--depends iproute2 \
-		-p ${OUT_PATH}/wiredoor_${VERSION}-1_alpine_amd64.apk \
-		bin/wiredoor-linux-amd64=/usr/bin/wiredoor \
-		etc/init.d/wiredoor.init=/etc/init.d/wiredoor
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "-X 'github.com/wiredoor/wiredoor-cli/cmd.Version=${VERSION}'" -o bin/wiredoor-linux-arm64
-	fpm -s dir -t apk -v ${VERSION} -a arm64 \
-		--depends iptables \
-		--depends wireguard-tools \
-		--depends iproute2 \
-		-p ${OUT_PATH}/wiredoor_${VERSION}-1_alpine_arm64.apk \
-		bin/wiredoor-linux-arm64=/usr/bin/wiredoor \
-		etc/init.d/wiredoor.init=/etc/init.d/wiredoor
+	@$(foreach arch,$(ARCHS), \
+		fpm -s dir -t apk -v $(VERSION) -a $(arch) \
+			--depends iptables \
+			--depends wireguard-tools \
+			--depends iproute2 \
+			-p $(OUT_PATH)/$(PKG_NAME)_$(VERSION)-1_alpine_$(arch).apk \
+			$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)=/usr/bin/$(PKG_NAME) \
+			etc/init.d/$(PKG_NAME).init=/etc/init.d/$(PKG_NAME);)
+
+build-pacman:
+	@$(foreach arch,$(ARCHS), \
+		fpm -s dir -t pacman -v $(VERSION) -a $(arch) \
+			--depends iptables \
+			--depends wireguard-tools \
+			--depends iproute2 \
+			-p $(OUT_PATH)/$(PKG_NAME)_$(VERSION)-1_archlinux_$(arch).pkg.tar.zst \
+			$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)=/usr/bin/$(PKG_NAME) \
+			etc/system/systemd/$(PKG_NAME).service=/usr/lib/systemd/system/$(PKG_NAME).service;)

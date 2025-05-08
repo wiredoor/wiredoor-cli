@@ -35,6 +35,9 @@ detect_os() {
       alpine)
         echo "alpine"
         ;;
+      arch)
+        echo "archlinux"
+        ;;
       *)
         echo "unsupported"
         ;;
@@ -48,7 +51,7 @@ ARCH=$(detect_arch)
 OS=$(detect_os)
 
 if [ "$OS" = "unsupported" ]; then
-  echo "❌ Unsupported OS=$OS"
+  echo "❌ Unsupported OS=$OS $ID"
   exit 1
 fi
 
@@ -84,6 +87,12 @@ case "$OS" in
     curl -fsSL "$URL" -o /tmp/wiredoor.apk
     $SUDO apk add --allow-untrusted /tmp/wiredoor.apk
     rm -f /tmp/wiredoor.apk
+    ;;
+  archlinux)
+    URL="https://github.com/$REPO/releases/download/v$VERSION/wiredoor_${VERSION}-1_archlinux_${ARCH}.apk"
+    curl -fsSL "$URL" -o /tmp/wiredoor.pkg.tar.zst
+    $SUDO pacman -U /tmp/wiredoor.pkg.tar.zst
+    rm -f /tmp/wiredoor.pkg.tar.zst
     ;;
 esac
 
