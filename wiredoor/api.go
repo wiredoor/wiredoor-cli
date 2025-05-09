@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/wiredoor/wiredoor-cli/version"
 )
 
 type apiRequest struct {
@@ -538,6 +540,7 @@ func requestApi(request apiRequest) []byte {
 
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "wiredoor-cli/" + version.Version)
 
 	if token != "" {
 		req.Header.Add("Authorization", "Bearer "+token)

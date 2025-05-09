@@ -9,9 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/wiredoor/wiredoor-cli/version"
 )
 
-var Version = "1.0.0"
 var showVersion bool
 
 // rootCmd represents the base command when called without any subcommands
@@ -32,7 +32,7 @@ var rootCmd = &cobra.Command{
 			return
 		}
 		if showVersion {
-			fmt.Printf("Wiredoor CLI version: %s\n", Version)
+			fmt.Printf("Wiredoor CLI version: %s\n", version.Version)
 			os.Exit(0)
 		}
 	},

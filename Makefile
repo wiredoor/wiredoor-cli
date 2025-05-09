@@ -2,7 +2,7 @@ VERSION ?= 1.0.0
 OUT_PATH ?= dist
 BIN_PATH := bin
 PKG_NAME := wiredoor
-GO_MODULE := github.com/wiredoor/wiredoor-cli/cmd
+GO_MODULE := github.com/wiredoor/wiredoor-cli
 ARCHS := amd64 arm64
 
 build-pkgs: build-binaries build-deb build-rpm build-apk build-pacman
@@ -12,7 +12,7 @@ build-binaries:
 	@$(foreach arch,$(ARCHS), \
 		echo "Building for $(arch)..."; \
 		CGO_ENABLED=0 GOOS=linux GOARCH=$(arch) go build \
-		-ldflags "-X '$(GO_MODULE).Version=$(VERSION)'" \
+		-ldflags "-X '$(GO_MODULE)/version.Version=$(VERSION)'" \
 		-o $(BIN_PATH)/$(PKG_NAME)-linux-$(arch);)
 
 build-deb:
