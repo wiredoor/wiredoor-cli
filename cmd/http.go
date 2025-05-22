@@ -18,6 +18,7 @@ var (
 	backendHost string
 	allowList   []string
 	blockList   []string
+	ttl         string
 )
 
 var httpCmd = &cobra.Command{
@@ -42,6 +43,8 @@ Optional flags:
   --path           URL path to expose (defaults to "/")
   --allow          Comma-separated list of allowed IP addresses or CIDRs (access control)
   --block          Comma-separated list of blocked IP addresses or CIDRs (access control)
+	--ttl						 Time-to-live duration for the exposure (e.g., "30m", "1h", "2d").
+                   Automatically disables the service after the specified duration.
 
 Example scenario:
   You have a local service running on http://localhost:3000 and want to expose it as:
@@ -69,7 +72,10 @@ Certificates:
   wiredoor http my-website --domain website.com --port 3000 --allow 192.168.1.0/24
 
   # Block a specific IP
-  wiredoor http my-website --domain website.com --port 3000 --block 203.0.113.42`,
+  wiredoor http my-website --domain website.com --port 3000 --block 203.0.113.42
+	
+	# Expose service temporarily for 1 hour
+  wiredoor http my-website --domain website.com --port 3000 --ttl 1h`,
 	Args: cobra.ExactArgs(1), // require "name"
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
@@ -90,6 +96,7 @@ Certificates:
 			PathLocation: path,
 			AllowedIps:   allowList,
 			BlockedIps:   blockList,
+			Ttl:          ttl,
 		}, node)
 	},
 }
@@ -104,4 +111,5 @@ func init() {
 	httpCmd.Flags().StringVar(&backendHost, "backendHost", "", "Target internal IP or hostname (used by gateway nodes)")
 	httpCmd.Flags().StringSliceVar(&allowList, "allow", nil, "List of allowed IPs or CIDRs")
 	httpCmd.Flags().StringSliceVar(&blockList, "block", nil, "List of blocked IPs or CIDRs")
+	httpCmd.Flags().StringVar(&ttl, "ttl", "", "Time-to-live duration for the exposure (e.g., 30m, 1h, 2d)")
 }

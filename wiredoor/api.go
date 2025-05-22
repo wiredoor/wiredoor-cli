@@ -26,6 +26,16 @@ type apiRequest struct {
 	Timeout int
 }
 
+type EnableRequest struct {
+	ID          string
+	ServiceType string
+	Ttl         string
+}
+
+type EnableParams struct {
+	Ttl string `json:"ttl"`
+}
+
 type AdminCredentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -45,6 +55,7 @@ type HttpServiceParams struct {
 	BackendPort  int      `json:"backendPort"`
 	AllowedIps   []string `json:"allowedIps"`
 	BlockedIps   []string `json:"blockedIps"`
+	Ttl          string   `json:"ttl"`
 }
 
 type TcpServiceParams struct {
@@ -57,6 +68,7 @@ type TcpServiceParams struct {
 	Port        int      `json:"port,omitempty"`
 	AllowedIps  []string `json:"allowedIps"`
 	BlockedIps  []string `json:"blockedIps"`
+	Ttl         string   `json:"ttl"`
 }
 
 type HttpService struct {
@@ -271,7 +283,6 @@ func GetTcpServices() []TcpService {
 }
 
 func GetNodeConfig() string {
-	// resp := requestApi("GET", "/cli/config", nil)
 	resp := requestApi(apiRequest{Method: "GET", Path: "/cli/config"})
 
 	if resp != nil {
@@ -300,7 +311,6 @@ func GetApiConfig() ApiConfig {
 }
 
 func GetNodeWGConfig() WGConfig {
-	// resp := requestApi("GET", "/cli/wgconfig", nil)
 	resp := requestApi(apiRequest{Method: "GET", Path: "/cli/wgconfig"})
 
 	if resp != nil {
@@ -345,7 +355,6 @@ func RegenerateKeys() {
 func ExposeHTTP(service HttpServiceParams, node NodeInfo) {
 	body, _ := json.Marshal(service)
 
-	// resp := requestApi("POST", "/cli/expose/http", body)
 	resp := requestApi(apiRequest{Method: "POST", Path: "/cli/expose/http", Body: body})
 
 	if resp != nil {
@@ -416,11 +425,17 @@ func DisableServiceByType(serviceType string, id string) {
 	}
 }
 
-func EnableServiceByType(serviceType string, id string) {
-	resp := requestApi(apiRequest{Method: "PATCH", Path: "/cli/services/" + serviceType + "/" + id + "/enable"})
+func EnableServiceByType(params EnableRequest) {
+	var body []byte
+
+	if params.Ttl != "" {
+		body, _ = json.Marshal(EnableParams{ Ttl: params.Ttl })
+	}
+
+	resp := requestApi(apiRequest{Method: "PATCH", Path: "/cli/services/" + params.ServiceType + "/" + params.ID + "/enable", Body: body})
 
 	if resp != nil {
-		if serviceType == "http" {
+		if params.ServiceType == "http" {
 			service := HttpService{}
 
 			err := json.Unmarshal(resp, &service)
@@ -433,7 +448,7 @@ func EnableServiceByType(serviceType string, id string) {
 
 			PrintHttpServices([]HttpService{service}, service.BackendHost != "")
 		}
-		if serviceType == "tcp" {
+		if params.ServiceType == "tcp" {
 			service := TcpService{}
 
 			err := json.Unmarshal(resp, &service)
@@ -540,7 +555,7 @@ func requestApi(request apiRequest) []byte {
 
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "wiredoor-cli/" + version.Version)
+	req.Header.Set("User-Agent", "wiredoor-cli/"+version.Version)
 
 	if token != "" {
 		req.Header.Add("Authorization", "Bearer "+token)
