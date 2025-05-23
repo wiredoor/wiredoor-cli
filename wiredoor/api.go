@@ -528,8 +528,8 @@ func PrintTcpServices(services []TcpService, IsGateway bool) {
 			target = svc.Proto + "://localhost:" + strconv.Itoa(svc.BackendPort)
 		}
 
-		fmt.Printf("- %s %s %s [%s] → %s://%s → %s\n",
-			strconv.Itoa(int(svc.ID)), enabled, svc.Name, proto, svc.Proto, svc.PublicAccess, target)
+		fmt.Printf("- %s %s %s [%s] → %s → %s\n",
+			strconv.Itoa(int(svc.ID)), enabled, svc.Name, proto, svc.PublicAccess, target)
 	}
 }
 
