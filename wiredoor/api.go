@@ -178,6 +178,10 @@ type BadRequest struct {
 	Message string `json:"message"`
 }
 
+type UpdateGatewayParams struct {
+	GatewayNetwork string `json:"gatewayNetwork"`
+}
+
 func AdminLogin(server string, username string, password string) (string, error) {
 	body, _ := json.Marshal(AdminCredentials{
 		Username: username,
@@ -429,7 +433,7 @@ func EnableServiceByType(params EnableRequest) {
 	var body []byte
 
 	if params.Ttl != "" {
-		body, _ = json.Marshal(EnableParams{ Ttl: params.Ttl })
+		body, _ = json.Marshal(EnableParams{Ttl: params.Ttl})
 	}
 
 	resp := requestApi(apiRequest{Method: "PATCH", Path: "/cli/services/" + params.ServiceType + "/" + params.ID + "/enable", Body: body})
@@ -461,6 +465,24 @@ func EnableServiceByType(params EnableRequest) {
 
 			PrintTcpServices([]TcpService{service}, service.BackendHost != "")
 		}
+	}
+}
+
+func UpdateGatewaySubnet(subnet string) {
+	body, _ := json.Marshal(UpdateGatewayParams{GatewayNetwork: subnet})
+
+	resp := requestApi(apiRequest{Method: "PATCH", Path: "/cli/node/gateway", Body: body})
+
+	if resp != nil {
+		node := NodeInfo{}
+
+		err := json.Unmarshal(resp, &node)
+
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		fmt.Printf("✅ Subnet successfully updated to: %s\n", node.GatewayNetwork)
 	}
 }
 
