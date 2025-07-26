@@ -33,7 +33,7 @@ jobs:
       - name: Install FPM dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ruby ruby-dev build-essential rpm make libarchive-tools
+          sudo apt-get install -y ruby ruby-dev build-essential rpm make libarchive-tools zstd
           sudo gem install --no-document fpm
 
       - name: Package .deb and .rpm
