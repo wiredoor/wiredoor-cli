@@ -19,7 +19,7 @@
 
 <p align="center">
   <a href="https://github.com/wiredoor/wiredoor-cli/actions">
-    <img src="https://github.com/wiredoor/wiredoor/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+    <img src="https://github.com/wiredoor/wiredoor-cli/actions/workflows/release.yml/badge.svg" alt="CI Status" />
   </a>
   <a href="https://github.com/wiredoor/wiredoor/releases">
     <img src="https://img.shields.io/github/v/release/wiredoor/wiredoor?label=Wiredoor" alt="Wiredoor Release" />
