@@ -58,11 +58,12 @@ Prompts will guide you through the registration and configuration process.`,
 			}
 		}
 
-		var username, password, nodeName, subnet string
+		var username, password, nodeName, subnet, iface string
 		var isGateway, allowInternet bool
 
 		hostname, _ := os.Hostname()
 		defaultSubnet, _ := utils.DefaultSubnet()
+		defaultInterface := utils.GetDefaultInterfaceName()
 
 		survey.AskOne(&survey.Input{
 			Message: "EMail:",
@@ -91,6 +92,13 @@ Prompts will guide you through the registration and configuration process.`,
 
 		if isGateway {
 			survey.AskOne(&survey.Input{
+				Message: "Gateway Interface:",
+				Default: defaultInterface,
+			}, &iface, survey.WithValidator(survey.Required))
+		}
+
+		if isGateway {
+			survey.AskOne(&survey.Input{
 				Message: "Gateway CIDR Subnet:",
 				Default: defaultSubnet,
 			}, &subnet, survey.WithValidator(survey.Required))
@@ -101,10 +109,15 @@ Prompts will guide you through the registration and configuration process.`,
 			Default: false,
 		}, &allowInternet)
 
+		networkConfig := wiredoor.GatewayNetwork{
+			Subnet: subnet,
+			Interface: iface,
+		}
+
 		node, err := wiredoor.ConfigureNode(url, token, wiredoor.NodeParams{
 			Name:           nodeName,
 			IsGateway:      isGateway,
-			GatewayNetwork: subnet,
+			GatewayNetworks: []wiredoor.GatewayNetwork{networkConfig},
 			AllowInternet:  allowInternet,
 		})
 

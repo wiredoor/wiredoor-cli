@@ -105,7 +105,7 @@ func manualLinuxDisconnect() {
 		}
 
 		if err := down.Run(); err != nil {
-			log.Fatalf("Error: Unable to disconnect: %v", err)
+			log.Printf("Error: Unable to disconnect: %v", err)
 		}
 		_ = os.Remove("/etc/wireguard/" + configFilename)
 	}

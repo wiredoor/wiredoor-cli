@@ -102,12 +102,18 @@ type PAT struct {
 	NodeId   int64     `json:"nodeId"`
 }
 
+type GatewayNetwork struct {
+	Interface string `json:"interface"`
+	Subnet    string `json:"subnet"`
+}
+
 type NodeParams struct {
-	Name           string `json:"name"`
-	Address        string `json:"address"`
-	GatewayNetwork string `json:"gatewayNetwork"`
-	IsGateway      bool   `json:"isGateway"`
-	AllowInternet  bool   `json:"allowInternet"`
+	Name            string           `json:"name"`
+	Address         string           `json:"address"`
+	GatewayNetwork  string           `json:"gatewayNetwork"`
+	GatewayNetworks []GatewayNetwork `json:"gatewayNetworks"`
+	IsGateway       bool             `json:"isGateway"`
+	AllowInternet   bool             `json:"allowInternet"`
 }
 
 type Node struct {
@@ -179,6 +185,7 @@ type BadRequest struct {
 }
 
 type UpdateGatewayParams struct {
+	GatewayInterface string `json:"gatewayInterface"`
 	GatewayNetwork string `json:"gatewayNetwork"`
 }
 
@@ -468,8 +475,8 @@ func EnableServiceByType(params EnableRequest) {
 	}
 }
 
-func UpdateGatewaySubnet(subnet string) {
-	body, _ := json.Marshal(UpdateGatewayParams{GatewayNetwork: subnet})
+func UpdateGatewaySubnet(network GatewayNetwork) {
+	body, _ := json.Marshal(UpdateGatewayParams{GatewayNetwork: network.Subnet, GatewayInterface: network.Interface})
 
 	resp := requestApi(apiRequest{Method: "PATCH", Path: "/cli/node/gateway", Body: body})
 

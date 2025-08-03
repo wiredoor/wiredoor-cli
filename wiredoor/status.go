@@ -80,7 +80,23 @@ func CheckWiredoorServer(debug bool) bool {
 func printNodeInfoDetails(node NodeInfo) {
 	fmt.Println("")
 	if node.IsGateway {
-		fmt.Printf("🛡️  Gateway: %s (%s) → 🌐 Subnet: %s\n", node.Name, node.Address, node.GatewayNetwork)
+		if node.GatewayNetwork != "" && len(node.GatewayNetworks) == 0 {
+			fmt.Println("⚠️ Using legacy gatewayNetwork field. Consider updating your Wiredoor Server.")
+
+			fmt.Printf("🛡️ Gateway: %s (%s) → 🌐 Subnet: %s\n", node.Name, node.Address, node.GatewayNetwork)
+		}
+		if len(node.GatewayNetworks) > 0 {
+			var entries []string
+			for _, net := range node.GatewayNetworks {
+				if !utils.InterfaceExists(net.Interface) {
+					fmt.Printf("⚠️ Interface \"%s\" does not exist on this system.\n", net.Interface)
+				}
+
+				entries = append(entries, fmt.Sprintf("%s: %s", net.Interface, net.Subnet))
+			}
+
+			fmt.Printf("🛡️ Gateway: %s (%s) → 🌐 Subnet: %s\n", node.Name, node.Address, entries)
+		}
 	} else {
 		fmt.Printf("🖥️  Node: %s (%s)\n", node.Name, node.Address)
 	}

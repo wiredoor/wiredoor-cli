@@ -1,8 +1,12 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"net"
+	"os/exec"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -89,4 +93,34 @@ func DefaultSubnet() (string, error) {
 	}
 
 	return "", fmt.Errorf("unable to get network information")
+}
+
+func GetDefaultInterfaceName() string {
+	cmd := exec.Command("ip", "route", "get", "8.8.8.8")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+
+	if err := cmd.Run(); err != nil {
+		return "eth0"
+	}
+	
+	re := regexp.MustCompile(`dev\s+(\S+)`)
+	matches := re.FindStringSubmatch(out.String())
+	if len(matches) < 2 {
+		return "eth0"
+	}
+	return strings.TrimSpace(matches[1])
+}
+
+func InterfaceExists(ifaceName string) bool {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return false
+	}
+	for _, iface := range ifaces {
+		if iface.Name == ifaceName {
+			return true
+		}
+	}
+	return false
 }
