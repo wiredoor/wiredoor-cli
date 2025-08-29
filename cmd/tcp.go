@@ -81,7 +81,7 @@ Examples:
 
 		node := wiredoor.GetNode()
 
-		if node.IsGateway && backendHost == "" {
+		if node.IsGateway && tcpBackendHost == "" {
 			fmt.Println("You must define --backendHost when your node is a gateway")
 			return
 		}
