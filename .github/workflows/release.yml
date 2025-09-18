@@ -86,5 +86,8 @@ jobs:
         with:
           context: .
           push: true
+          sbom: true
+          provenance: true
+          target: production
           platforms: linux/amd64,linux/arm64
           tags: ghcr.io/${{ github.repository_owner }}/wiredoor-cli:${{ github.ref_name }}, wiredoor/wiredoor-cli:${{ github.ref_name }}, ghcr.io/${{ github.repository_owner }}/wiredoor-cli:latest, wiredoor/wiredoor-cli:latest
