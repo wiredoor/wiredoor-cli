@@ -5,6 +5,6 @@
 --config-files /etc/wiredoor/config.ini
 --license "MIT"
 --url "https://www.wiredoor.net"
---maintainer "Daniel Mesa <dmesa@infladoor.com>"
---vendor "Infladoor LLC"
+--maintainer "Daniel Mesa <dmesa@wiredoor.net>"
+--vendor "Wiredoor"
 etc/wiredoor/config.ini.example=/etc/wiredoor/config.ini
