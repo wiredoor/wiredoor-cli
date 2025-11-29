@@ -12,7 +12,7 @@ COPY . .
 RUN go mod download && \
   CGO_ENABLED=0 GOOS=linux GOARCH=$GOARCH go build -o bin/wiredoor
 
-FROM alpine:3.21 AS production
+FROM alpine:3.22 AS production
 
 WORKDIR /app
 
