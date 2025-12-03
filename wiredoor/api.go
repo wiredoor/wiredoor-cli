@@ -110,7 +110,6 @@ type GatewayNetwork struct {
 type NodeParams struct {
 	Name            string           `json:"name"`
 	Address         string           `json:"address"`
-	GatewayNetwork  string           `json:"gatewayNetwork"`
 	GatewayNetworks []GatewayNetwork `json:"gatewayNetworks"`
 	IsGateway       bool             `json:"isGateway"`
 	AllowInternet   bool             `json:"allowInternet"`
@@ -119,13 +118,14 @@ type NodeParams struct {
 type Node struct {
 	ID int64 `json:"id"`
 	NodeParams
-	WgInterface  string        `json:"wgInterface"`
-	Enabled      bool          `json:"enabled"`
-	CreatedAt    time.Time     `json:"created_at"`
-	UpdatedAt    time.Time     `json:"updated_at"`
-	HttpServices []HttpService `json:"httpServices"`
-	TcpServices  []TcpService  `json:"tcpServices"`
-	Token        string        `json:"token"`
+	GatewayNetwork string        `json:"gatewayNetwork"`
+	WgInterface    string        `json:"wgInterface"`
+	Enabled        bool          `json:"enabled"`
+	CreatedAt      time.Time     `json:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at"`
+	HttpServices   []HttpService `json:"httpServices"`
+	TcpServices    []TcpService  `json:"tcpServices"`
+	Token          string        `json:"token"`
 }
 
 type NodeInfo struct {
@@ -186,7 +186,7 @@ type BadRequest struct {
 
 type UpdateGatewayParams struct {
 	GatewayInterface string `json:"gatewayInterface"`
-	GatewayNetwork string `json:"gatewayNetwork"`
+	GatewayNetwork   string `json:"gatewayNetwork"`
 }
 
 func AdminLogin(server string, username string, password string) (string, error) {

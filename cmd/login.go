@@ -90,18 +90,23 @@ Prompts will guide you through the registration and configuration process.`,
 			Default: false,
 		}, &isGateway)
 
+		var gatewayNetworks []wiredoor.GatewayNetwork = nil
+
 		if isGateway {
 			survey.AskOne(&survey.Input{
 				Message: "Gateway Interface:",
 				Default: defaultInterface,
 			}, &iface, survey.WithValidator(survey.Required))
-		}
 
-		if isGateway {
 			survey.AskOne(&survey.Input{
 				Message: "Gateway CIDR Subnet:",
 				Default: defaultSubnet,
 			}, &subnet, survey.WithValidator(survey.Required))
+
+			gatewayNetworks = []wiredoor.GatewayNetwork{{
+				Subnet:    subnet,
+				Interface: iface,
+			}}
 		}
 
 		survey.AskOne(&survey.Confirm{
@@ -109,15 +114,10 @@ Prompts will guide you through the registration and configuration process.`,
 			Default: false,
 		}, &allowInternet)
 
-		networkConfig := wiredoor.GatewayNetwork{
-			Subnet: subnet,
-			Interface: iface,
-		}
-
 		node, err := wiredoor.ConfigureNode(url, token, wiredoor.NodeParams{
 			Name:           nodeName,
 			IsGateway:      isGateway,
-			GatewayNetworks: []wiredoor.GatewayNetwork{networkConfig},
+			GatewayNetworks: gatewayNetworks,
 			AllowInternet:  allowInternet,
 		})
 
