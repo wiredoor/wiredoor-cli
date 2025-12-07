@@ -48,7 +48,6 @@ build-apk:
 build-pacman:
 	@$(foreach arch,$(ARCHS), \
 		fpm -s dir -t pacman -v $(VERSION) -a $(arch) \
-			--depends iptables \
 			--depends wireguard-tools \
 			--depends iproute2 \
 			-p $(OUT_PATH)/$(PKG_NAME)_$(VERSION)-1_archlinux_$(arch).pkg.tar.zst \

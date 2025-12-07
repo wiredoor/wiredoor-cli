@@ -89,6 +89,11 @@ case "$OS" in
     rm -f /tmp/wiredoor.apk
     ;;
   archlinux)
+    if ! command -v iptables >/dev/null 2>&1; then
+      echo "[wiredoor] 'iptables' command not found."
+      echo "Install either 'iptables-nft' or 'iptables' and run the installer again."
+      exit 1
+    fi
     URL="https://github.com/$REPO/releases/download/v$VERSION/wiredoor_${VERSION}-1_archlinux_${ARCH}.pkg.tar.zst"
     curl -fsSL "$URL" -o /tmp/wiredoor.pkg.tar.zst
     DEPS=$(tar -xOf /tmp/wiredoor.pkg.tar.zst .PKGINFO | grep '^depend =' | cut -d= -f2- | xargs)
