@@ -5,10 +5,17 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"time"
+	// "golang.org/x/sys/windows" //windows admin
 )
 
 // var interfaceName = "wg0"
-var configFilename = "wg0.conf"
+var tunnelName = "wg0" //used to stop service
+var configFilename = tunnelName + ".conf"
+
+// system paths
+var locationOfAPPDATA = os.Getenv("APPDATA")
+var locationOfTEMP = os.Getenv("TEMP")
 
 type ConnectionConfig struct {
 	URL       string
@@ -44,9 +51,18 @@ func Connect(connection ConnectionConfig) {
 
 		fmt.Printf("Connecting %s %s...\n", nodeType, node.Name)
 
-		// Using wg-quick
-		manualLinuxConnect()
+		// Using wireguard service
+		manualWindowsConnect()
+		fmt.Println("Waiting for connection starts (5 secs max)")
 
+		//5 secs max
+		for i := 0; i < 10; i++ {
+			time.Sleep(500 * time.Millisecond)
+			if WireguardInterfaceExists() {
+				break
+			}
+		}
+		//last check
 		Status()
 	} else {
 		fmt.Println("Error: Unable to connect we can't communicate with wiredoor server to get node configuration")
@@ -54,65 +70,118 @@ func Connect(connection ConnectionConfig) {
 }
 
 func RestartTunnel() {
-	manualLinuxRestart()
+	manualWindowsRestart()
 }
 
 func Disconnect() {
 	ensureRoot()
-	manualLinuxDisconnect()
+	manualWindowsDisconnect()
 }
 
 func ensureRoot() {
-	if os.Geteuid() != 0 {
-		fmt.Fprintln(os.Stderr, "Permission denied: root privileges are required (try with sudo)")
+
+	adminCheck := exec.Command("net", "session")
+
+	if err := adminCheck.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, "Permission denied: Admin privileges are required")
 		os.Exit(1)
 	}
+	// var token windows.Token
+	// process := windows.CurrentProcess()
+	// err := windows.OpenProcessToken(process, windows.TOKEN_QUERY, &token)
+	// if err != nil {
+	// 	fmt.Fprintln(os.Stderr, "Permission denied: Admin privileges are required")
+	// 	os.Exit(1)
+	// }
+	// defer token.Close()
+
+	// var elevation windows.TokenElevation
+	// var returnedLen uint32
+	// err = windows.GetTokenInformation(token, windows.TokenElevation, (*byte)(&elevation), uint32(unsafe.Sizeof(elevation)), &returnedLen)
+	// if err != nil {
+	// 	fmt.Fprintln(os.Stderr, "Permission denied: Admin privileges are required")
+	// 	os.Exit(1)
+	// }
+	// if elevation.TokenIsElevated == 0 {
+	// 	fmt.Fprintln(os.Stderr, "Permission denied: Admin privileges are required")
+	// 	os.Exit(1)
+	// }
 }
 
-func manualLinuxConnect() {
+func manualWindowsConnect() {
 	config := GetNodeConfig()
-	err := os.WriteFile("/etc/wireguard/"+configFilename, []byte(config), 0600)
+	err := os.WriteFile(locationOfTEMP+"\\"+configFilename, []byte(config), 0600)
 	if err != nil {
 		log.Fatal(err)
 	}
-	up := exec.Command("bash", "-c", "wg-quick up wg0") // wg-quick down wg0 > /dev/null &2>1
+	//wireguard /installtunnelservice full_file_path
+	up := exec.Command("wireguard", "/installtunnelservice", locationOfTEMP+"\\"+configFilename)
+
+	fmt.Println("wireguard " + "/installtunnelservice " + locationOfTEMP + "\\" + configFilename)
 
 	if IsDaemonEnabled() {
-		RestartService()
-		EnableService()
+		fmt.Println("IGNORING DAEMON ...")
 	}
 
 	if err := up.Run(); err != nil {
-		log.Fatal("Error: Unable to connect to tunnel, please review your user permissions or if you are inside container ensure that you have added the capability NET_ADMIN")
+		log.Fatal("Error: Unable to connect to tunnel")
+	}
+
+	//iniciar servicio
+	//net start WireGuardTunnel$wg11
+	start := exec.Command("net", "start", "WireGuardTunnel$"+tunnelName)
+	if err := start.Run(); err != nil {
+		log.Printf("Error: Unable to start tunnel service, %s\n", err.Error())
+	}
+
+	// if ExistWireguardConfigFile() {
+	// 	_ = os.Remove(locationOfTEMP + "\\" + configFilename)
+	// }
+}
+
+func manualWindowsRestart() {
+	//net stop WireGuardTunnel$wg0
+	stop := exec.Command("net", "stop", "WireGuardTunnel$"+tunnelName)
+	if err := stop.Run(); err != nil {
+		log.Fatal("Error: Unable to stop tunnel service")
+	}
+	//net start WireGuardTunnel$wg11
+	start := exec.Command("net", "start", "WireGuardTunnel$"+tunnelName)
+	if err := start.Run(); err != nil {
+		log.Fatal("Error: Unable to start tunnel service")
 	}
 }
 
-func manualLinuxRestart() {
-	restart := exec.Command("bash", "-c", "wg-quick down wg0 && wg-quick up wg0") // wg-quick down wg0 > /dev/null &2>1
-	if err := restart.Run(); err != nil {
-		log.Fatal("Error: Unable to restart the tunnel, please review your user permissions or if you are inside container ensure that you have added the capability NET_ADMIN")
-	}
-}
+func manualWindowsDisconnect() {
 
-func manualLinuxDisconnect() {
+	log.Println("Disconecting...")
+
+	//net stop WireGuardTunnel$wg0
+	stop := exec.Command("net", "stop", "WireGuardTunnel$"+tunnelName)
+	if err := stop.Run(); err != nil {
+		log.Fatal("Error: Unable to stop tunnel service")
+	}
+
+	//wireguard /uninstalltunnelservice wg0
+	down := exec.Command("wireguard", "/uninstalltunnelservice", tunnelName)
+
+	if IsDaemonEnabled() {
+		StopService()
+		DisableService()
+	}
+
+	if err := down.Run(); err != nil {
+		log.Printf("Error: Unable to disconnect: %v", err)
+	}
+
 	if ExistWireguardConfigFile() {
-		log.Println("Disconecting...")
-		down := exec.Command("bash", "-c", "wg-quick down wg0") // wg-quick down wg0 > /dev/null &2>1
 
-		if IsDaemonEnabled() {
-			StopService()
-			DisableService()
-		}
-
-		if err := down.Run(); err != nil {
-			log.Printf("Error: Unable to disconnect: %v", err)
-		}
-		_ = os.Remove("/etc/wireguard/" + configFilename)
+		_ = os.Remove(locationOfTEMP + "\\" + configFilename)
 	}
 }
 
 func ExistWireguardConfigFile() bool {
-	_, err := os.Stat("/etc/wireguard/" + configFilename)
+	_, err := os.Stat(locationOfTEMP + "\\" + configFilename)
 
 	return err == nil
 }
