@@ -49,6 +49,7 @@ jobs:
             dist/*.rpm
             dist/*.apk
             dist/*.pkg.tar.zst
+            dist/*.exe
 
   build-image:
     name: Build Gateway Image
