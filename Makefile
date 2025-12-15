@@ -60,6 +60,7 @@ build-windows:
 	@$(foreach arch,$(ARCHS), \
 		echo "Building Windows for $(arch)..."; \
 		CGO_ENABLED=0 GOOS=windows GOARCH=$(arch) go build \
-		-ldflags "-X '$(GO_MODULE)/version.Version=$(VERSION)'" \
-		-o $(BIN_PATH)/$(PKG_NAME)-windows-$(arch).exe \
-		.;)
+			-ldflags "-X '$(GO_MODULE)/version.Version=$(VERSION)'" \
+			-o $(BIN_PATH)/$(PKG_NAME)-windows-$(arch).exe \
+			.; \
+		cp $(BIN_PATH)/$(PKG_NAME)-windows-$(arch).exe $(OUT_PATH)/$(PKG_NAME)_$(VERSION)_windows_$(arch).exe; )
