@@ -64,6 +64,10 @@ func Connect(connection ConnectionConfig) {
 		}
 		//last check
 		Status()
+
+		// if ExistWireguardConfigFile() {
+		// 	_ = os.Remove(locationOfTEMP + "\\" + configFilename)
+		// }
 	} else {
 		fmt.Println("Error: Unable to connect we can't communicate with wiredoor server to get node configuration")
 	}
@@ -128,15 +132,14 @@ func manualWindowsConnect() {
 	}
 
 	//iniciar servicio
-	//net start WireGuardTunnel$wg11
+	//net start WireGuardTunnel$wg0
+
+	time.Sleep(1000 * time.Millisecond) // wait system to add service
+
 	start := exec.Command("net", "start", "WireGuardTunnel$"+tunnelName)
 	if err := start.Run(); err != nil {
-		log.Printf("Error: Unable to start tunnel service, %s\n", err.Error())
+		log.Printf("WARNING: Unable to start tunnel service sunner, %s\n", err.Error())
 	}
-
-	// if ExistWireguardConfigFile() {
-	// 	_ = os.Remove(locationOfTEMP + "\\" + configFilename)
-	// }
 }
 
 func manualWindowsRestart() {
