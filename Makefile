@@ -5,7 +5,7 @@ PKG_NAME := wiredoor
 GO_MODULE := github.com/wiredoor/wiredoor-cli
 ARCHS := amd64 arm64
 
-build-pkgs: build-binaries build-deb build-rpm build-apk build-pacman
+build-pkgs: build-binaries build-deb build-rpm build-apk build-pacman build-windows
 
 build-binaries:
 	@mkdir -p $(BIN_PATH)
@@ -54,3 +54,12 @@ build-pacman:
 			-p $(OUT_PATH)/$(PKG_NAME)_$(VERSION)-1_archlinux_$(arch).pkg.tar.zst \
 			$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)=/usr/bin/$(PKG_NAME) \
 			etc/system/systemd/$(PKG_NAME).service=/usr/lib/systemd/system/$(PKG_NAME).service;)
+
+build-windows:
+	@mkdir -p $(BIN_PATH)
+	@$(foreach arch,$(ARCHS), \
+		echo "Building Windows for $(arch)..."; \
+		CGO_ENABLED=0 GOOS=windows GOARCH=$(arch) go build \
+		-ldflags "-X '$(GO_MODULE)/version.Version=$(VERSION)'" \
+		-o $(BIN_PATH)/$(PKG_NAME)-windows-$(arch).exe \
+		.;)
