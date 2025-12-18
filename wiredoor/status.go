@@ -3,8 +3,6 @@ package wiredoor
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"runtime"
 	"time"
 
 	"github.com/wiredoor/wiredoor-cli/utils"
@@ -60,20 +58,8 @@ func WatchHealt() {
 }
 
 func WireguardInterfaceExists() bool {
-	//!TODO ADD MORE OSSes
-	currentOS := runtime.GOOS
-	switch currentOS {
-	case "windows": // netsh interface show interface wg11
-		cmd := exec.Command("netsh", "interface", "show", "interface", tunnelName)
-		return cmd.Run() == nil
-	case "linux":
-		cmd := exec.Command("ip", "link", "show", "wg0")
-		return cmd.Run() == nil
-	default:
-		cmd := exec.Command("ip", "link", "show", "wg0")
-		return cmd.Run() == nil
-	}
-
+	//OS implementation
+	return interfaceExists()
 }
 
 func CheckWiredoorServer(debug bool) bool {

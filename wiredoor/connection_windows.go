@@ -1,3 +1,6 @@
+//go:build windows
+// +build windows
+
 package wiredoor
 
 import (
@@ -14,7 +17,6 @@ var tunnelName = "wg0" //used to stop service
 var configFilename = tunnelName + ".conf"
 
 // system paths
-var locationOfAPPDATA = os.Getenv("APPDATA")
 var locationOfTEMP = os.Getenv("TEMP")
 
 type ConnectionConfig struct {
@@ -187,4 +189,10 @@ func ExistWireguardConfigFile() bool {
 	_, err := os.Stat(locationOfTEMP + "\\" + configFilename)
 
 	return err == nil
+}
+
+func interfaceExists() bool {
+	// netsh interface show interface wg11
+	cmd := exec.Command("netsh", "interface", "show", "interface", tunnelName) //wg0
+	return cmd.Run() == nil
 }

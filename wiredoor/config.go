@@ -4,12 +4,14 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"gopkg.in/ini.v1"
 )
 
-var configFile_windows = locationOfAPPDATA + "/wiredoor/config.ini"
+// !TODO search for dependencies on var configFile
+var configFile = getConfigLocation()
 
 var defaultConfig = map[string]map[string]string{
 	"server": {
@@ -45,6 +47,18 @@ type Config struct {
 	Daemon DaemonConfig
 }
 
+func getConfigLocation() string {
+	currentOS := runtime.GOOS
+	switch currentOS {
+	case "windows": // netsh interface show interface wg11
+		return os.Getenv("APPDATA") + "/wiredoor/config.ini"
+	case "linux":
+		return "/etc/wiredoor/config.ini"
+	default:
+		return "/etc/wiredoor/config.ini"
+	}
+}
+
 func SaveServerConfig(server string, token string) {
 	cfg, err := getIniFile()
 
@@ -55,7 +69,7 @@ func SaveServerConfig(server string, token string) {
 	cfg.Section("server").Key("url").SetValue(server)
 	cfg.Section("server").Key("token").SetValue(token)
 
-	cfg.SaveTo(configFile_windows)
+	cfg.SaveTo(configFile)
 }
 
 func SaveDaemonConfig(useDaemon bool) {
@@ -66,7 +80,7 @@ func SaveDaemonConfig(useDaemon bool) {
 	}
 	cfg.Section("daemon").Key("enabled").SetValue(boolToString(useDaemon))
 
-	cfg.SaveTo(configFile_windows)
+	cfg.SaveTo(configFile)
 }
 
 func IsDaemonEnabled() bool {
@@ -104,7 +118,7 @@ func getConfig() Config {
 }
 
 func getIniFile() (*ini.File, error) {
-	cfg, err := ini.Load(configFile_windows)
+	cfg, err := ini.Load(configFile)
 
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -116,7 +130,7 @@ func getIniFile() (*ini.File, error) {
 }
 
 func createDefaultConfigFile() (*ini.File, error) {
-	dir := filepath.Dir(configFile_windows)
+	dir := filepath.Dir(configFile)
 
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
@@ -131,7 +145,7 @@ func createDefaultConfigFile() (*ini.File, error) {
 		}
 	}
 
-	err := cfg.SaveTo(configFile_windows)
+	err := cfg.SaveTo(configFile)
 
 	return cfg, err
 }
