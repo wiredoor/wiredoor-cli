@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 	// "golang.org/x/sys/windows" //windows admin
 )
@@ -133,25 +134,44 @@ func manualWindowsConnect() {
 		log.Fatal("Error: Unable to connect to tunnel")
 	}
 
-	//iniciar servicio
-	//net start WireGuardTunnel$wg0
-
-	time.Sleep(1000 * time.Millisecond) // wait system to add service
-
-	start := exec.Command("net", "start", "WireGuardTunnel$"+tunnelName)
-	if err := start.Run(); err != nil {
-		log.Printf("WARNING: Unable to start tunnel service sunner, %s\n", err.Error())
+	//Wait service creation
+	log.Printf("Creating tunnel service ...\n")
+	verifyServiceCmd := exec.Command("sc", "query", "WireGuardTunnel$"+tunnelName)
+	//5 secs max
+	{
+		var serviceIsRunning bool = false
+		for i := 0; i < 10; i++ {
+			time.Sleep(500 * time.Millisecond)
+			err := verifyServiceCmd.Run()
+			if err != nil {
+				if strings.Contains(err.Error(), "1056") {
+					serviceIsRunning = true
+					log.Printf("Service already running")
+				}
+				break
+			} else if i == 9 {
+				log.Printf("WARNING: Service registration timed out, %s\n", err.Error())
+			}
+		}
+		if !serviceIsRunning {
+			//iniciar servicio
+			//sc start WireGuardTunnel$wg0
+			start := exec.Command("sc", "start", "WireGuardTunnel$"+tunnelName)
+			if err := start.Run(); err != nil {
+				log.Printf("WARNING: Unable to start tunnel service sunner, %s\n", err.Error())
+			}
+		}
 	}
 }
 
 func manualWindowsRestart() {
-	//net stop WireGuardTunnel$wg0
-	stop := exec.Command("net", "stop", "WireGuardTunnel$"+tunnelName)
+	//sc stop WireGuardTunnel$wg0
+	stop := exec.Command("sc", "stop", "WireGuardTunnel$"+tunnelName)
 	if err := stop.Run(); err != nil {
 		log.Fatal("Error: Unable to stop tunnel service")
 	}
-	//net start WireGuardTunnel$wg11
-	start := exec.Command("net", "start", "WireGuardTunnel$"+tunnelName)
+	//sc start WireGuardTunnel$wg11
+	start := exec.Command("sc", "start", "WireGuardTunnel$"+tunnelName)
 	if err := start.Run(); err != nil {
 		log.Fatal("Error: Unable to start tunnel service")
 	}
@@ -161,8 +181,8 @@ func manualWindowsDisconnect() {
 
 	log.Println("Disconecting...")
 
-	//net stop WireGuardTunnel$wg0
-	stop := exec.Command("net", "stop", "WireGuardTunnel$"+tunnelName)
+	//sc stop WireGuardTunnel$wg0
+	stop := exec.Command("sc", "stop", "WireGuardTunnel$"+tunnelName)
 	if err := stop.Run(); err != nil {
 		log.Fatal("Error: Unable to stop tunnel service")
 	}
