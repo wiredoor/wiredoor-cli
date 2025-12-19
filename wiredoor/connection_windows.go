@@ -4,6 +4,7 @@
 package wiredoor
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -124,8 +125,6 @@ func manualWindowsConnect() {
 	//wireguard /installtunnelservice full_file_path
 	up := exec.Command("wireguard", "/installtunnelservice", locationOfTEMP+"\\"+configFilename)
 
-	fmt.Println("wireguard " + "/installtunnelservice " + locationOfTEMP + "\\" + configFilename)
-
 	if IsDaemonEnabled() {
 		fmt.Println("IGNORING DAEMON ...")
 	}
@@ -137,6 +136,10 @@ func manualWindowsConnect() {
 	//Wait service creation
 	log.Printf("Creating tunnel service ...\n")
 	verifyServiceCmd := exec.Command("sc", "query", "WireGuardTunnel$"+tunnelName)
+	var vscmdstderr, vscmdstdout bytes.Buffer
+	verifyServiceCmd.Stderr = &vscmdstderr
+	verifyServiceCmd.Stdout = &vscmdstdout
+
 	//5 secs max
 	{
 		var serviceIsRunning bool = false
@@ -144,13 +147,16 @@ func manualWindowsConnect() {
 			time.Sleep(500 * time.Millisecond)
 			err := verifyServiceCmd.Run()
 			if err != nil {
-				if strings.Contains(err.Error(), "1056") {
+				if strings.Contains(vscmdstdout.String(), "1056") ||
+					strings.Contains(vscmdstderr.String(), "1056") ||
+					strings.Contains(err.Error(), "1056") {
 					serviceIsRunning = true
 					log.Printf("Service already running")
 				}
 				break
 			} else if i == 9 {
-				log.Printf("WARNING: Service registration timed out, %s\n", err.Error())
+				log.Printf("WARNING: Service registration timed out\n")
+				break
 			}
 		}
 		if !serviceIsRunning {
@@ -158,7 +164,13 @@ func manualWindowsConnect() {
 			//sc start WireGuardTunnel$wg0
 			start := exec.Command("sc", "start", "WireGuardTunnel$"+tunnelName)
 			if err := start.Run(); err != nil {
-				log.Printf("WARNING: Unable to start tunnel service sunner, %s\n", err.Error())
+				errorStr := err.Error()
+				if strings.Contains(errorStr, "1056") {
+					log.Printf("Tunnel service is running\n")
+				} else {
+					log.Printf("WARNING: Unable to start tunnel service sunner, %s\n", errorStr)
+				}
+
 			}
 		}
 	}
