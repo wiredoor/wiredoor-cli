@@ -140,39 +140,17 @@ func manualWindowsConnect() {
 	verifyServiceCmd.Stderr = &vscmdstderr
 	verifyServiceCmd.Stdout = &vscmdstdout
 
-	//5 secs max
-	{
-		var serviceIsRunning bool = false
-		for i := 0; i < 10; i++ {
-			time.Sleep(500 * time.Millisecond)
-			err := verifyServiceCmd.Run()
-			if err != nil {
-				if strings.Contains(vscmdstdout.String(), "1056") ||
-					strings.Contains(vscmdstderr.String(), "1056") ||
-					strings.Contains(err.Error(), "1056") {
-					serviceIsRunning = true
-					log.Printf("Service already running")
-				}
-				break
-			} else if i == 9 {
-				log.Printf("WARNING: Service registration timed out\n")
-				break
-			}
+	//iniciar servicio
+	//sc start WireGuardTunnel$wg0
+	start := exec.Command("sc", "start", "WireGuardTunnel$"+tunnelName)
+	if err := start.Run(); err != nil {
+		errorStr := err.Error()
+		if strings.Contains(errorStr, "1056") {
+			log.Printf("Tunnel service is running\n")
+		} else {
+			log.Printf("WARNING: Unable to start tunnel service sunner, %s\n", errorStr)
 		}
-		if !serviceIsRunning {
-			//iniciar servicio
-			//sc start WireGuardTunnel$wg0
-			start := exec.Command("sc", "start", "WireGuardTunnel$"+tunnelName)
-			if err := start.Run(); err != nil {
-				errorStr := err.Error()
-				if strings.Contains(errorStr, "1056") {
-					log.Printf("Tunnel service is running\n")
-				} else {
-					log.Printf("WARNING: Unable to start tunnel service sunner, %s\n", errorStr)
-				}
 
-			}
-		}
 	}
 }
 

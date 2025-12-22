@@ -4,7 +4,10 @@ Copyright © 2024 Daniel Mesa <support@wiredoor.net>
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
 )
 
@@ -28,6 +31,15 @@ Examples:
   wiredoor disconnect
   wiredoor disconnect && sleep 5 && wiredoor connect`,
 	Run: func(cmd *cobra.Command, args []string) {
+		//check for admin
+		if !utils.IsRoot() {
+			//run as admin on windows or print a message on linux
+			if err := utils.RelaunchAsRoot(); err == nil {
+				// wiredoor.Status()
+				os.Exit(0)
+			}
+		}
+		//! TODO Continue anyway ?
 		wiredoor.Disconnect()
 	},
 }
