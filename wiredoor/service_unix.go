@@ -1,3 +1,6 @@
+//go:build !windows
+// +build !windows
+
 package wiredoor
 
 import (
@@ -10,9 +13,6 @@ import (
 
 // StartService starts the wiredoor service based on init system
 func StartService() error {
-	if runtime.GOOS == "windows" {
-		return fmt.Errorf("unsupported init system on OS: %s", "windows")
-	}
 	init := getInitSystem()
 	switch init {
 	case "systemd":
@@ -26,10 +26,6 @@ func StartService() error {
 
 // StopService stops the wiredoor service
 func StopService() error {
-	//!TODO integrate all systems
-	if runtime.GOOS == "windows" {
-		return fmt.Errorf("unsupported init system on OS: %s", "windows")
-	}
 	init := getInitSystem()
 	switch init {
 	case "systemd":
@@ -43,10 +39,6 @@ func StopService() error {
 
 // RestartService restarts the wiredoor service
 func RestartService() error {
-	//!TODO integrate all systems
-	if runtime.GOOS == "windows" {
-		return fmt.Errorf("unsupported init system on OS: %s", "windows")
-	}
 	init := getInitSystem()
 	switch init {
 	case "systemd":

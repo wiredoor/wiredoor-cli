@@ -150,3 +150,7 @@ Write-Info "Verifying install..."
 
 Write-Info "Done!"
 Write-Info "Try: wiredoor --help"
+
+# -----------------------------
+# Install Service ??
+# -----------------------------
