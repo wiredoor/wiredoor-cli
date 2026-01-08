@@ -1,7 +1,7 @@
 //go:build !windows
 // +build !windows
 
-package putils
+package utils
 
 func SetConsoleCharacterEncodingToUTF8(cp uint32) error {
 	//linux placeholder
