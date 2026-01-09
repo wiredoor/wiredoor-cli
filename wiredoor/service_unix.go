@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 )
 
@@ -52,10 +51,6 @@ func RestartService() error {
 
 // EnableService enables the wiredoor service to start on boot
 func EnableService() error {
-	//!TODO integrate all systems
-	if runtime.GOOS == "windows" {
-		return fmt.Errorf("unsupported init system on OS: %s", "windows")
-	}
 	init := getInitSystem()
 	switch init {
 	case "systemd":
@@ -69,10 +64,6 @@ func EnableService() error {
 
 // DisableService disables the wiredoor service from starting on boot
 func DisableService() error {
-	//!TODO integrate all systems
-	if runtime.GOOS == "windows" {
-		return fmt.Errorf("unsupported init system on OS: %s", "windows")
-	}
 	init := getInitSystem()
 	switch init {
 	case "systemd":

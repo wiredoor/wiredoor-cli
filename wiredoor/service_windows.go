@@ -36,7 +36,7 @@ func openServiceLowPriv(m *mgr.Mgr, name string) (*mgr.Service, error) {
 //---------------------------------------
 
 var WiredoorServiceName = "wiredoorService"
-var serviceArgs = "status --watch --interval 10"
+var serviceArgs = "service --serviceInterval 10"
 
 // does not needs Admin priv. on windows
 func WiredoorServiceExists() (bool, error) {
@@ -113,13 +113,13 @@ func StartService() error {
 				//create service
 				appPath, err := os.Executable()
 				if err != nil {
-					return fmt.Errorf("unable to find service path: %v", err)
+					return fmt.Errorf("unable to find service executable path: %v", err)
 				}
 				serviceConfig := mgr.Config{
 					DisplayName:    WiredoorServiceName,
 					Description:    "Wiredoor service",
-					BinaryPathName: appPath,
-					StartType:      mgr.StartManual,
+					BinaryPathName: appPath + " " + serviceArgs,
+					StartType:      mgr.StartAutomatic,
 					ServiceType:    windows.SERVICE_WIN32_OWN_PROCESS,
 				}
 				serviceCon, err := serviceMangerConnection.CreateService(WiredoorServiceName, appPath, serviceConfig, serviceArgs)
@@ -130,9 +130,12 @@ func StartService() error {
 			}
 			//start service
 			if serviceConnection, err := serviceMangerConnection.OpenService(WiredoorServiceName); err == nil {
-				//!TODO check if serviceArgs are pased as command line or as service args (not the same)
+				//serviceArgs are pased as service args plus app args on BinaryPathName field of serviceConfig
 				defer serviceConnection.Close()
-				return fmt.Errorf("unable to start service: %v", serviceConnection.Start(serviceArgs))
+				if err := serviceConnection.Start(""); err != nil {
+					return fmt.Errorf("unable to start service: %v", err)
+				}
+				return nil
 			} else {
 				return fmt.Errorf("unable to open service: %v", err)
 			}
@@ -155,9 +158,8 @@ func StopService() error {
 				//not listed
 				return fmt.Errorf("not stoped, service not found: %v", err)
 			}
-			//start service
+			//query stop service
 			if serviceConnection, err := serviceMangerConnection.OpenService(WiredoorServiceName); err == nil {
-				//!TODO check if serviceArgs are pased as command line or as service args (not the same)
 				if _, err := serviceConnection.Control(svc.Stop); err != nil {
 					return fmt.Errorf("unable to stop service: %v", err)
 				}

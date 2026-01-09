@@ -20,5 +20,5 @@ func RelaunchAsRoot() error {
 		return errors.New("Permission denied: root privileges are required (try with sudo)")
 	}
 	//! verify how to launch with correct permissions
-	return errors.New("Running as root user ...")
+	return nil
 }

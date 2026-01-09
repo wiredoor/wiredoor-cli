@@ -11,6 +11,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"golang.org/x/sys/windows/svc"
 	// "golang.org/x/sys/windows" //windows admin
 )
 
@@ -125,10 +127,6 @@ func manualWindowsConnect() {
 	//wireguard /installtunnelservice full_file_path
 	up := exec.Command("wireguard", "/installtunnelservice", locationOfTEMP+"\\"+configFilename)
 
-	if IsDaemonEnabled() {
-		fmt.Println("IGNORING DAEMON ...")
-	}
-
 	if err := up.Run(); err != nil {
 		log.Fatal("Error: Unable to connect to tunnel")
 	}
@@ -151,6 +149,15 @@ func manualWindowsConnect() {
 			log.Printf("WARNING: Unable to start tunnel service sunner, %s\n", errorStr)
 		}
 
+	}
+	amIservice, err := svc.IsWindowsService()
+	if err != nil {
+		amIservice = false
+	}
+	if IsDaemonEnabled() {
+		if !amIservice {
+			StartService()
+		}
 	}
 }
 
