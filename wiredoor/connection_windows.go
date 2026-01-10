@@ -163,12 +163,12 @@ func manualWindowsRestart() {
 	//sc stop WireGuardTunnel$wg0
 	stop := exec.Command("sc", "stop", "WireGuardTunnel$"+tunnelName)
 	if err := stop.Run(); err != nil {
-		log.Fatal("Error: Unable to stop tunnel service")
+		log.Println("Warinig: Unable to stop tunnel service")
 	}
 	//sc start WireGuardTunnel$wg11
 	start := exec.Command("sc", "start", "WireGuardTunnel$"+tunnelName)
 	if err := start.Run(); err != nil {
-		log.Fatal("Error: Unable to start tunnel service")
+		log.Println("Warinig: Unable to start tunnel service")
 	}
 }
 
@@ -209,5 +209,10 @@ func ExistWireguardConfigFile() bool {
 func interfaceExists() bool {
 	// netsh interface show interface wg11
 	cmd := exec.Command("netsh", "interface", "show", "interface", tunnelName) //wg0
-	return cmd.Run() == nil
+	err := cmd.Run()
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
 }
