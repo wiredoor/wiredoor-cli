@@ -21,14 +21,7 @@ type wiredoorWindowsService struct{}
 
 func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- svc.Status) (bool, uint32) {
 
-	//log
-	file, err := os.Create("Z:\\wiredoor\\wiredoorService.log")
-	if err != nil {
-		return true, 1
-	}
-	defer file.Close()
-	// starting
-	file.WriteString("Iniciando Servicio\n")
+	log.Print("Iniciando Servicio\n")
 	s <- svc.Status{State: svc.StartPending}
 	//running
 	//channel for sync coms
@@ -36,7 +29,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 	//wait group for sync
 	var waitGroupMonitor sync.WaitGroup
 	// create go routine for monitoring
-	//
+	log.Println("Begin monitoring routine")
 	waitGroupMonitor.Add(1)
 	go func() {
 
@@ -46,40 +39,40 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 			select {
 			//when channel is closed
 			case <-routineComs:
-				file.WriteString("Rutina Cerrada...\n")
+				log.Printf("Stop monitoring\n")
 				return
 			default:
 				sleepSeconds := serviceInterval
 				if sleepSeconds <= 0 {
 					sleepSeconds = 15
 				}
+				log.Println("Check status")
 				wiredoor.WatchHealt()
-				file.WriteString("Rutina ...\n")
 				time.Sleep(time.Duration(sleepSeconds) * time.Second)
 			}
 		}
 	}()
 
 	s <- svc.Status{State: svc.Running, Accepts: svc.AcceptStop | svc.AcceptShutdown}
-	file.WriteString("Iniciando Servicio\n")
+	log.Printf("Start service\n")
 	for {
 		select {
 		case c := <-r:
 			switch c.Cmd {
 			case svc.Stop, svc.Shutdown:
 				s <- svc.Status{State: svc.StopPending} //notify status
-				file.WriteString("Deteniendo servicio\n")
+				log.Printf("Stop service\n")
 				//alert runing goroutine
 				close(routineComs)
 				//wait for cleanup
-				file.WriteString("Esperando rutinas\n")
+				log.Printf("Wait for cleanup\n")
 				waitGroupMonitor.Wait()
-				file.WriteString("Terminado\n")
+				log.Printf("The end\n")
 				return false, 0
-			default: // nop
+			default: // never
 			}
 		}
-		//no
+		//never
 		time.Sleep(500 * time.Millisecond)
 	}
 }
@@ -107,30 +100,29 @@ Examples:
 
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// file, err := os.Create("Z:\\wiredoor\\wiredoorServiceApp.log")
-		// if err != nil {
-		// 	fmt.Print("-------\n")
-		// 	return
-		// }
-		// defer file.Close()
-
-		// file.WriteString("xxxxxxxxxxxxxxxxxxxxx\n")
-
 		isService, err := svc.IsWindowsService()
-		// file.WriteString("Windows Service?\n")
+
 		if err != nil {
-			// file.WriteString("Fail to determine if is a service\n")
+			log.Print("Unable to determine if running as service")
 			log.Fatal(err)
 		}
 		if isService {
-			// file.WriteString("Starting service\n")
+			logFileName := os.Getenv("PROGRAMDATA") + "\\WiredoorLastServiceLog.txt"
+			logFile, err := os.Create(logFileName)
+			if err == nil {
+				defer logFile.Close()
+				log.SetOutput(logFile)
+			} else {
+				//never
+				log.Println("Warinig:Fail to create log file")
+			}
 			err = svc.Run(wiredoor.WiredoorServiceName, &wiredoorWindowsService{})
 			if err != nil {
-				// file.WriteString("Fail to start service mode\n")
+				log.Print("Fail to start service mode\n")
 				os.Exit(1)
 			}
 		} else {
-			// file.WriteString("Running as common app, made for run as service ...\n")
+			log.Print("Running as common app, made for run as service ...\n")
 			os.Exit(1)
 		}
 		// }

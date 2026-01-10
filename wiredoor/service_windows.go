@@ -5,6 +5,7 @@ package wiredoor
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"slices"
@@ -156,7 +157,7 @@ func StopService() error {
 
 	scStop := exec.Command("sc", "stop", WiredoorServiceName)
 	if err := scStop.Run(); err != nil {
-		fmt.Printf("Warning, Error using sc stop,%v \n", err)
+		log.Printf("Warning, Error using sc stop,%v \n", err)
 	}
 	return nil
 	// serviceMangerConnection, err := mgr.Connect()
@@ -236,7 +237,7 @@ func DisableService() error {
 
 	scStop := exec.Command("sc", "delete", WiredoorServiceName)
 	if err := scStop.Run(); err != nil {
-		fmt.Printf("Warning, Error using sc delete,%v \n", err)
+		log.Printf("Warning, Error using sc delete,%v \n", err)
 	}
 	return nil
 	// serviceMangerConnection, err := mgr.Connect()

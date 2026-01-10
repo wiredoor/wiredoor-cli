@@ -5,7 +5,6 @@ package wiredoor
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -55,11 +54,11 @@ func Connect(connection ConnectionConfig) {
 			nodeType = "gateway"
 		}
 
-		fmt.Printf("Connecting %s %s...\n", nodeType, node.Name)
+		log.Printf("Connecting %s %s...\n", nodeType, node.Name)
 
 		// Using wireguard service
 		manualWindowsConnect()
-		fmt.Println("Waiting for connection starts (5 secs max)")
+		log.Println("Waiting for connection starts (5 secs max)")
 
 		//5 secs max
 		for i := 0; i < 10; i++ {
@@ -75,7 +74,7 @@ func Connect(connection ConnectionConfig) {
 		// 	_ = os.Remove(locationOfTEMP + "\\" + configFilename)
 		// }
 	} else {
-		fmt.Println("Error: Unable to connect we can't communicate with wiredoor server to get node configuration")
+		log.Println("Error: Unable to connect we can't communicate with wiredoor server to get node configuration")
 	}
 }
 
@@ -93,14 +92,14 @@ func ensureRoot() {
 	adminCheck := exec.Command("net", "session")
 
 	if err := adminCheck.Run(); err != nil {
-		fmt.Fprintln(os.Stderr, "Permission denied: Admin privileges are required")
+		log.Println("Permission denied: Admin privileges are required")
 		os.Exit(1)
 	}
 	// var token windows.Token
 	// process := windows.CurrentProcess()
 	// err := windows.OpenProcessToken(process, windows.TOKEN_QUERY, &token)
 	// if err != nil {
-	// 	fmt.Fprintln(os.Stderr, "Permission denied: Admin privileges are required")
+	// 	log.Fprintln(os.Stderr, "Permission denied: Admin privileges are required")
 	// 	os.Exit(1)
 	// }
 	// defer token.Close()
@@ -109,7 +108,7 @@ func ensureRoot() {
 	// var returnedLen uint32
 	// err = windows.GetTokenInformation(token, windows.TokenElevation, (*byte)(&elevation), uint32(unsafe.Sizeof(elevation)), &returnedLen)
 	// if err != nil {
-	// 	fmt.Fprintln(os.Stderr, "Permission denied: Admin privileges are required")
+	// 	log.Fprintln(os.Stderr, "Permission denied: Admin privileges are required")
 	// 	os.Exit(1)
 	// }
 	// if elevation.TokenIsElevated == 0 {
@@ -180,7 +179,7 @@ func manualWindowsDisconnect() {
 	//sc stop WireGuardTunnel$wg0
 	stop := exec.Command("sc", "stop", "WireGuardTunnel$"+tunnelName)
 	if err := stop.Run(); err != nil {
-		log.Fatal("Error: Unable to stop tunnel service")
+		log.Printf("Warnig: Unable to stop tunnel service")
 	}
 
 	//wireguard /uninstalltunnelservice wg0

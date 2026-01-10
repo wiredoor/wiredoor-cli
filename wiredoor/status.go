@@ -2,6 +2,7 @@ package wiredoor
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -41,6 +42,7 @@ func Health() {
 }
 
 func WatchHealt() {
+	log.Println("WatchHealt")
 	if ExistWireguardConfigFile() {
 		if !WireguardInterfaceExists() {
 			node := GetNode()
