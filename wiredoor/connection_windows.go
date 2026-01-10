@@ -148,7 +148,6 @@ func manualWindowsConnect() {
 		} else {
 			log.Printf("WARNING: Unable to start tunnel service sunner, %s\n", errorStr)
 		}
-
 	}
 	amIservice, err := svc.IsWindowsService()
 	if err != nil {

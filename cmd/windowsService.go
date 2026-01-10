@@ -7,7 +7,6 @@ Copyright © 2024 Daniel Mesa <support@wiredoor.net>
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -108,30 +107,30 @@ Examples:
 
 	Run: func(cmd *cobra.Command, args []string) {
 
-		file, err := os.Create("Z:\\wiredoor\\wiredoorServiceApp.log")
-		if err != nil {
-			fmt.Print("-------\n")
-			return
-		}
-		defer file.Close()
+		// file, err := os.Create("Z:\\wiredoor\\wiredoorServiceApp.log")
+		// if err != nil {
+		// 	fmt.Print("-------\n")
+		// 	return
+		// }
+		// defer file.Close()
 
-		file.WriteString("xxxxxxxxxxxxxxxxxxxxx\n")
+		// file.WriteString("xxxxxxxxxxxxxxxxxxxxx\n")
 
 		isService, err := svc.IsWindowsService()
-		file.WriteString("Windows Service?\n")
+		// file.WriteString("Windows Service?\n")
 		if err != nil {
-			file.WriteString("Fail to determine if is a service\n")
+			// file.WriteString("Fail to determine if is a service\n")
 			log.Fatal(err)
 		}
 		if isService {
-			file.WriteString("Starting service\n")
+			// file.WriteString("Starting service\n")
 			err = svc.Run(wiredoor.WiredoorServiceName, &wiredoorWindowsService{})
 			if err != nil {
-				file.WriteString("Fail to start service mode\n")
+				// file.WriteString("Fail to start service mode\n")
 				os.Exit(1)
 			}
 		} else {
-			file.WriteString("Running as common app, made for run as service ...\n")
+			// file.WriteString("Running as common app, made for run as service ...\n")
 			os.Exit(1)
 		}
 		// }
@@ -140,7 +139,5 @@ Examples:
 
 func init() {
 	rootCmd.AddCommand(windowsServiceCmd)
-
-	// windowsServiceCmd.Flags().BoolVar(&service, "service", false, "Continuously monitor connection status as service")
 	windowsServiceCmd.Flags().IntVar(&serviceInterval, "serviceInterval", 10, "Polling interval in seconds (used with --service)")
 }
