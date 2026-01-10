@@ -46,7 +46,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 				if sleepSeconds <= 0 {
 					sleepSeconds = 15
 				}
-				log.Println("Check status")
+				// log.Println("Check status")
 				wiredoor.WatchHealt()
 				time.Sleep(time.Duration(sleepSeconds) * time.Second)
 			}
