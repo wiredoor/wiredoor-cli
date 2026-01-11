@@ -4,7 +4,6 @@
 package wiredoor
 
 import (
-	"bytes"
 	"log"
 	"os"
 	"os/exec"
@@ -130,13 +129,6 @@ func manualWindowsConnect() {
 		log.Fatal("Error: Unable to connect to tunnel")
 	}
 
-	//Wait service creation
-	log.Printf("Creating tunnel service ...\n")
-	verifyServiceCmd := exec.Command("sc", "query", "WireGuardTunnel$"+tunnelName)
-	var vscmdstderr, vscmdstdout bytes.Buffer
-	verifyServiceCmd.Stderr = &vscmdstderr
-	verifyServiceCmd.Stdout = &vscmdstdout
-
 	//iniciar servicio
 	//sc start WireGuardTunnel$wg0
 	start := exec.Command("sc", "start", "WireGuardTunnel$"+tunnelName)
@@ -176,33 +168,38 @@ func manualWindowsDisconnect() {
 
 	log.Println("Disconecting...")
 
-	//sc stop WireGuardTunnel$wg0
-	stop := exec.Command("sc", "stop", "WireGuardTunnel$"+tunnelName)
-	if err := stop.Run(); err != nil {
-		log.Printf("Warnig: Unable to stop tunnel service")
+	exists, err := ServiceExists("WireGuardTunnel$" + tunnelName)
+	if err != nil {
+		log.Printf("Warning, unable to determine if tunnel service exists, assuming true : %v", err)
+		exists = true
 	}
+	if exists {
+		//sc stop WireGuardTunnel$wg0
+		stop := exec.Command("sc", "stop", "WireGuardTunnel$"+tunnelName)
+		if err := stop.Run(); err != nil {
+			log.Printf("Warnig: Unable to stop tunnel service: %v \n", err)
+		}
 
-	//wireguard /uninstalltunnelservice wg0
-	down := exec.Command("wireguard", "/uninstalltunnelservice", tunnelName)
+		//wireguard /uninstalltunnelservice wg0
+		down := exec.Command("wireguard", "/uninstalltunnelservice", tunnelName)
+		if err := down.Run(); err != nil {
+			log.Printf("Error: Unable to disconnect wireguard tunnel: %v", err)
+		}
+
+	}
 
 	if IsDaemonEnabled() {
 		StopService()
 		DisableService()
 	}
 
-	if err := down.Run(); err != nil {
-		log.Printf("Error: Unable to disconnect: %v", err)
-	}
-
 	if ExistWireguardConfigFile() {
-
 		_ = os.Remove(locationOfTEMP + "\\" + configFilename)
 	}
 }
 
 func ExistWireguardConfigFile() bool {
 	_, err := os.Stat(locationOfTEMP + "\\" + configFilename)
-
 	return err == nil
 }
 

@@ -52,7 +52,7 @@ Typical usage:
 				os.Exit(0)
 			}
 		}
-		//Continue anyway, useful on linux
+		//Continue anyway linux or uac disabled
 		if !wiredoor.WireguardInterfaceExists() {
 			wiredoor.Connect(wiredoor.ConnectionConfig{URL: url, Token: token, UseDaemon: useDaemon, SetDaemon: setDaemon})
 		}

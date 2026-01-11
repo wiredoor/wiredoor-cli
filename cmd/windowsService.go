@@ -21,7 +21,7 @@ type wiredoorWindowsService struct{}
 
 func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- svc.Status) (bool, uint32) {
 
-	log.Print("Iniciando Servicio\n")
+	log.Printf("Starting service, execute args: %v\n", args)
 	s <- svc.Status{State: svc.StartPending}
 	//running
 	//channel for sync coms
@@ -44,7 +44,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 			default:
 				sleepSeconds := serviceInterval
 				if sleepSeconds <= 0 {
-					sleepSeconds = 15
+					sleepSeconds = 10
 				}
 				// log.Println("Check status")
 				wiredoor.WatchHealt()
@@ -91,7 +91,7 @@ By default this command is for internal use, running wiredoor as windows service
 
 Optional flags allowed:
 
-  --interval   Interval in seconds to use with --watch (default: 5)
+  --serviceInterval   Interval in seconds to use with service command(default: 10)
 
 Examples:
 
@@ -122,7 +122,7 @@ Examples:
 				os.Exit(1)
 			}
 		} else {
-			log.Print("Running as common app, made for run as service ...\n")
+			log.Print("Running as console app, made for run as service ...\n")
 			os.Exit(1)
 		}
 		// }
@@ -131,5 +131,5 @@ Examples:
 
 func init() {
 	rootCmd.AddCommand(windowsServiceCmd)
-	windowsServiceCmd.Flags().IntVar(&serviceInterval, "serviceInterval", 10, "Polling interval in seconds (used with --service)")
+	windowsServiceCmd.Flags().IntVar(&serviceInterval, "serviceInterval", 10, "Polling interval in seconds (used with service)")
 }

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"slices"
 	"syscall"
 
@@ -43,9 +42,9 @@ var WiredoorServiceName = "wiredoorService"
 
 // does not needs Admin priv. on windows
 func WiredoorServiceExists() (bool, error) {
-	return serviceExists(WiredoorServiceName)
+	return ServiceExists(WiredoorServiceName)
 }
-func serviceExists(serviceName string) (bool, error) {
+func ServiceExists(serviceName string) (bool, error) {
 	// Connect to service manager
 	serviceManagerConnection, err := connectToLocalServiceManagerLowPriv()
 	if err != nil {
@@ -137,17 +136,29 @@ func StartService() error {
 			if serviceConnection, err := serviceMangerConnection.OpenService(WiredoorServiceName); err == nil {
 				//serviceArgs are pased as service args plus app args on BinaryPathName field of serviceConfig
 				defer serviceConnection.Close()
+				if serviceCfg, err := serviceConnection.Config(); err != nil {
+					log.Printf("unable to get service config: %v", err)
+				} else {
+					serviceCfg.StartType = mgr.StartAutomatic
+					if err := serviceConnection.UpdateConfig(serviceCfg); err != nil {
+						log.Printf("unable to update service config: %v", err)
+					}
+				}
 				if err := serviceConnection.Start(""); err != nil {
+					log.Printf("unable to start service: %v", err)
 					return fmt.Errorf("unable to start service: %v", err)
 				}
 				return nil
 			} else {
+				log.Printf("unable to open service: %v", err)
 				return fmt.Errorf("unable to open service: %v", err)
 			}
 		} else {
+			log.Printf("error listing serices: %v", err)
 			return fmt.Errorf("error listing serices: %v", err)
 		}
 	} else {
+		log.Printf("unable to access to service manager: %v", err)
 		return fmt.Errorf("unable to access to service manager: %v", err)
 	}
 }
@@ -155,35 +166,35 @@ func StartService() error {
 // StopService stops the wiredoor service
 func StopService() error {
 
-	scStop := exec.Command("sc", "stop", WiredoorServiceName)
-	if err := scStop.Run(); err != nil {
-		log.Printf("Warning, Error using sc stop,%v \n", err)
+	serviceMangerConnection, err := mgr.Connect()
+	if err == nil {
+		defer serviceMangerConnection.Disconnect()
+		// detect if installed
+		if serviceList, err := serviceMangerConnection.ListServices(); err == nil {
+			if !slices.Contains(serviceList, WiredoorServiceName) {
+				//not listed
+				log.Printf("not stoped, wiredoor service not found")
+				return fmt.Errorf("not stoped, wiredoor service not found")
+			}
+			//query stop service
+			if serviceConnection, err := serviceMangerConnection.OpenService(WiredoorServiceName); err == nil {
+				if _, err := serviceConnection.Control(svc.Stop); err != nil {
+					log.Printf("unable to stop service: %v", err)
+					return fmt.Errorf("unable to stop service: %v", err)
+				}
+				return nil
+			} else {
+				log.Printf("unable to open service: %v", err)
+				return fmt.Errorf("unable to open service: %v", err)
+			}
+		} else {
+			log.Printf("error listing serices: %v", err)
+			return fmt.Errorf("error listing serices: %v", err)
+		}
+	} else {
+		log.Printf("unable to access to service manager: %v", err)
+		return fmt.Errorf("unable to access to service manager: %v", err)
 	}
-	return nil
-	// serviceMangerConnection, err := mgr.Connect()
-	// if err == nil {
-	// 	defer serviceMangerConnection.Disconnect()
-	// 	// detect if installed
-	// 	if serviceList, err := serviceMangerConnection.ListServices(); err == nil {
-	// 		if !slices.Contains(serviceList, WiredoorServiceName) {
-	// 			//not listed
-	// 			return fmt.Errorf("not stoped, service not found: %v", err)
-	// 		}
-	// 		//query stop service
-	// 		if serviceConnection, err := serviceMangerConnection.OpenService(WiredoorServiceName); err == nil {
-	// 			if _, err := serviceConnection.Control(svc.Stop); err != nil {
-	// 				return fmt.Errorf("unable to stop service: %v", err)
-	// 			}
-	// 			return nil
-	// 		} else {
-	// 			return fmt.Errorf("unable to open service: %v", err)
-	// 		}
-	// 	} else {
-	// 		return fmt.Errorf("error listing serices: %v", err)
-	// 	}
-	// } else {
-	// 	return fmt.Errorf("unable to access to service manager: %v", err)
-	// }
 }
 
 // RestartService restarts the wiredoor service
@@ -234,42 +245,54 @@ func EnableService() error {
 
 // DisableService disables the wiredoor service from starting on boot
 func DisableService() error {
-
-	scStop := exec.Command("sc", "delete", WiredoorServiceName)
-	if err := scStop.Run(); err != nil {
-		log.Printf("Warning, Error using sc delete,%v \n", err)
-	}
-	return nil
-	// serviceMangerConnection, err := mgr.Connect()
-	// if err == nil {
-	// 	defer serviceMangerConnection.Disconnect()
-	// 	// detect if installed
-	// 	if serviceList, err := serviceMangerConnection.ListServices(); err == nil {
-	// 		if !slices.Contains(serviceList, WiredoorServiceName) {
-	// 			//not listed
-	// 			return fmt.Errorf("not disabled, service not found: %v", err)
-	// 		}
-	// 		//start service
-	// 		if serviceConnection, err := serviceMangerConnection.OpenService(WiredoorServiceName); err == nil {
-	// 			defer serviceConnection.Close()
-	// 			//!TODO check if serviceArgs are pased as command line or as service args (not the same)
-	// 			if serviceCfg, err := serviceConnection.Config(); err != nil {
-	// 				return fmt.Errorf("unable to get service config: %v", err)
-	// 			} else {
-	// 				serviceCfg.StartType = mgr.StartDisabled
-	// 				if err := serviceConnection.UpdateConfig(serviceCfg); err != nil {
-	// 					return fmt.Errorf("unable to update service config: %v", err)
-	// 				}
-	// 				StopService()
-	// 			}
-	// 			return nil
-	// 		} else {
-	// 			return fmt.Errorf("unable to open service: %v", err)
-	// 		}
-	// 	} else {
-	// 		return fmt.Errorf("error listing serices: %v", err)
-	// 	}
-	// } else {
-	// 	return fmt.Errorf("unable to access to service manager: %v", err)
+	// exists, err := WiredoorServiceExists()
+	// if err != nil {
+	// 	log.Printf("Waring, unable to determine if service exists, try to disable anyway,: %v", err)
+	// 	exists = true
 	// }
+	// if exists {
+	// 	scDelete := exec.Command("sc", "delete", WiredoorServiceName)
+	// 	if err := scDelete.Run(); err != nil {
+	// 		log.Printf("Warning, Error deleting service,%v \n", err)
+	// 		return err
+	// 	}
+	// }
+	// return nil
+	serviceMangerConnection, err := mgr.Connect()
+	if err == nil {
+		defer serviceMangerConnection.Disconnect()
+		// detect if installed
+		if serviceList, err := serviceMangerConnection.ListServices(); err == nil {
+			if !slices.Contains(serviceList, WiredoorServiceName) {
+				//not listed
+				log.Printf("not disabled, service not found: %v", err)
+				return fmt.Errorf("not disabled, service not found: %v", err)
+			}
+			//disable service
+			if serviceConnection, err := serviceMangerConnection.OpenService(WiredoorServiceName); err == nil {
+				defer serviceConnection.Close()
+				if serviceCfg, err := serviceConnection.Config(); err != nil {
+					log.Printf("unable to get service config: %v", err)
+					return fmt.Errorf("unable to get service config: %v", err)
+				} else {
+					serviceCfg.StartType = mgr.StartDisabled
+					if err := serviceConnection.UpdateConfig(serviceCfg); err != nil {
+						log.Printf("unable to update service config: %v", err)
+						return fmt.Errorf("unable to update service config: %v", err)
+					}
+					StopService()
+				}
+				return nil
+			} else {
+				log.Printf("unable to open service: %v", err)
+				return fmt.Errorf("unable to open service: %v", err)
+			}
+		} else {
+			log.Printf("error listing serices: %v", err)
+			return fmt.Errorf("error listing serices: %v", err)
+		}
+	} else {
+		log.Printf("unable to access to service manager: %v", err)
+		return fmt.Errorf("unable to access to service manager: %v", err)
+	}
 }
