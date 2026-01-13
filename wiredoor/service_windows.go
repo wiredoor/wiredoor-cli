@@ -200,11 +200,11 @@ func StopService() error {
 // RestartService restarts the wiredoor service
 func RestartService() error {
 	err := StopService()
-	if err == nil {
-		err = StartService()
-		return err
+	if err != nil {
+		log.Printf("Warning, when try to stop service: %v", err)
 	}
-	return nil
+	err = StartService()
+	return err
 }
 
 func EnableService() error {

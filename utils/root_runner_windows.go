@@ -4,7 +4,7 @@
 package utils
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -18,7 +18,7 @@ func IsRoot() bool {
 }
 
 func RelaunchAsRoot() error {
-	fmt.Printf("running as Admin ...\n")
+	log.Printf("running as Admin ...\n")
 
 	shellCommand := "runas"
 	executablePath, _ := os.Executable()
