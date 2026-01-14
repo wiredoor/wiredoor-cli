@@ -9,6 +9,7 @@ build-pkgs: build-artifacts build-binaries build-deb build-rpm build-apk build-p
 
 build-artifacts:
 	chmod +x ./gen-winres.sh
+	export VERSION=$(VERSION)
 	./gen-winres.sh
 
 build-binaries:

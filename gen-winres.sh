@@ -15,7 +15,6 @@ done
 WINRES_TPL="build/windows/winres/winres.json.tmpl"
 WINRES="build/windows/winres/winres.json"
 
-export VERSION
 envsubst < "$WINRES_TPL" > "$WINRES"
 
 go install github.com/tc-hib/go-winres@latest
