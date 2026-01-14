@@ -7,3 +7,4 @@ etc/wiredoor/config.ini
 *.rpm
 *.pkg
 *.exe
+*.syso

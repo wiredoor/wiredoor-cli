@@ -5,7 +5,11 @@ PKG_NAME := wiredoor
 GO_MODULE := github.com/wiredoor/wiredoor-cli
 ARCHS := amd64 arm64
 
-build-pkgs: build-binaries build-deb build-rpm build-apk build-pacman build-windows
+build-pkgs: build-artifacts build-binaries build-deb build-rpm build-apk build-pacman build-windows
+
+build-artifacts:
+	chmod +x ./gen-winres.sh
+	./gen-winres.sh
 
 build-binaries:
 	@mkdir -p $(BIN_PATH)
