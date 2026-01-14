@@ -15,11 +15,8 @@ done
 WINRES_TPL="build/windows/winres/winres.json.tmpl"
 WINRES="build/windows/winres/winres.json"
 
-: "${APP_VERSION:?APP_VERSION no definida (ej: 0.7.0.0)}"
-: "${APP_ID:=com.wiredoor.cli}"
-
-export APP_VERSION APP_ID
+export VERSION
 envsubst < "$WINRES_TPL" > "$WINRES"
 
 go install github.com/tc-hib/go-winres@latest
-go-winres make --in build/windows/winres/winres.json --out rsrc_windows_amd64.syso
+go-winres make --in build/windows/winres/winres.json
