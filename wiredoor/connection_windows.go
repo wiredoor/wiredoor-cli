@@ -199,6 +199,7 @@ func manualWindowsDisconnect() {
 }
 
 func ExistWireguardConfigFile() bool {
+	log.Printf("Wireguar cfg: %s", locationOfTEMP+"\\"+configFilename)
 	_, err := os.Stat(locationOfTEMP + "\\" + configFilename)
 	return err == nil
 }
@@ -208,7 +209,7 @@ func interfaceExists() bool {
 	cmd := exec.Command("netsh", "interface", "show", "interface", tunnelName) //wg0
 	err := cmd.Run()
 	if err != nil {
-		log.Println(err)
+		log.Printf("could not detect virtual interface using net, %v", err)
 		return false
 	}
 	return true
