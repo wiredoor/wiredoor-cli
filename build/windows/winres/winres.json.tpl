@@ -2,13 +2,13 @@
   "RT_GROUP_ICON": {
     "APP": {
       "0000": [
-        "build/windows/icons/16x16.png",
-        "build/windows/icons/24x24.png",
-        "build/windows/icons/32x32.png",
-        "build/windows/icons/48x48.png",
-        "build/windows/icons/64x64.png",
-        "build/windows/icons/128x128.png",
-        "build/windows/icons/256x256.png"
+        "../icons/16x16.png",
+        "../icons/24x24.png",
+        "../icons/32x32.png",
+        "../icons/48x48.png",
+        "../icons/64x64.png",
+        "../icons/128x128.png",
+        "../icons/256x256.png"
       ]
     }
   },
@@ -20,7 +20,7 @@
         "execution-level": "as invoker",
         "ui-access": false,
         "auto-elevate": false,
-        "dpi-awareness": "per-monitor",
+        "dpi-awareness": "system",
         "disable-theming": false,
         "disable-window-filtering": false,
         "high-resolution-scrolling-aware": false,
