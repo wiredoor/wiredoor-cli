@@ -35,20 +35,23 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 
 		defer waitGroupMonitor.Done()
 
+		sleepSeconds := serviceInterval
+		if sleepSeconds <= 0 {
+			sleepSeconds = 10
+		}
+		timer := time.NewTimer(time.Second * time.Duration(sleepSeconds))
+		defer timer.Stop()
+
 		for {
 			select {
 			//when channel is closed
 			case <-routineComs:
 				log.Printf("Stop monitoring\n")
 				return
-			default:
-				sleepSeconds := serviceInterval
-				if sleepSeconds <= 0 {
-					sleepSeconds = 10
-				}
-				// log.Println("Check status")
+			case <-timer.C:
 				wiredoor.WatchHealt()
-				time.Sleep(time.Duration(sleepSeconds) * time.Second)
+				//wait 10 seconds before new check
+				timer.Reset(time.Second * time.Duration(sleepSeconds))
 			}
 		}
 	}()
