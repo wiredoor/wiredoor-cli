@@ -20,7 +20,7 @@
         "execution-level": "as invoker",
         "ui-access": false,
         "auto-elevate": false,
-        "dpi-awareness": "system",
+        "dpi-awareness": "per-monitor",
         "disable-theming": false,
         "disable-window-filtering": false,
         "high-resolution-scrolling-aware": false,

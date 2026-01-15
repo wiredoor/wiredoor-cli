@@ -4,7 +4,7 @@ set -euo pipefail
 SVG="wiredoor.svg"
 ICONS_DIR="build/windows/icons/"
 
-WINRES_TPL="build/windows/winres/winres.json.tpl"
+WINRES_TPL="build/windows/winres/winres.json.tmpl"
 WINRES="build/windows/winres/winres.json"
 
 curl -Lo "$SVG" "https://www.wiredoor.net/images/wiredoor.svg"
@@ -18,4 +18,4 @@ done
 envsubst < "$WINRES_TPL" > "$WINRES"
 
 go install github.com/tc-hib/go-winres@latest
-go-winres make --in build/windows/winres/winres.json
+go-winres make --in build/windows/winres/winres.json --out ./rsrc_windows_amd64.syso
