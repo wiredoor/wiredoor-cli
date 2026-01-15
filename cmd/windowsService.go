@@ -47,9 +47,14 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 			//when channel is closed
 			case <-routineComs:
 				log.Printf("Stop monitoring\n")
+				//call deferred timer.stop
 				return
 			case <-timer.C:
 				wiredoor.WatchHealt()
+				//compatibility and stability
+				if !timer.Stop() {
+					<-timer.C
+				}
 				//wait 10 seconds before new check
 				timer.Reset(time.Second * time.Duration(sleepSeconds))
 			}
