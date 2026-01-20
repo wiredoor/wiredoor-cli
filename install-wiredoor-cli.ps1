@@ -152,5 +152,11 @@ Write-Info "Done!"
 Write-Info "Try: wiredoor --help"
 
 # -----------------------------
-# Install Service ??
+# Install Service
 # -----------------------------
+#stop previous version
+#sc stop wiredoorService
+#delete previous
+#sc delete wiredoorService
+#sc create wiredoorService binPath= "\"$TargetExe\" service --serviceInterval 10" start= auto obj= LocalSystem
+#sc start wiredoorService

@@ -105,6 +105,7 @@ func ServiceRunning(serviceName string) (bool, error) {
 // Common api
 // needs Admin priv
 // StartService starts the wiredoor service
+// not used on service mode
 func StartService() error {
 
 	serviceMangerConnection, err := mgr.Connect()

@@ -7,10 +7,7 @@ Copyright © 2024 Daniel Mesa <support@wiredoor.net>
 package cmd
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
-	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
 )
 
@@ -47,15 +44,6 @@ Typical usage:
 		useDaemon, _ := cmd.Flags().GetBool("daemon")
 		setDaemon := cmd.Flags().Changed("daemon")
 
-		//check for admin
-		if !utils.IsRoot() {
-			//run as admin on windows or print a message on linux
-			if err := utils.RelaunchAsRoot(); err == nil {
-				// wiredoor.Status()
-				os.Exit(0)
-			}
-		}
-		//Continue anyway linux or uac disabled
 		if !wiredoor.WireguardInterfaceExists() {
 			wiredoor.Connect(wiredoor.ConnectionConfig{URL: url, Token: token, UseDaemon: useDaemon, SetDaemon: setDaemon})
 		}
