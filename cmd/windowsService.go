@@ -43,24 +43,21 @@ command format:
 var WiredoorPipePathName string = `\\.\pipe\wiredoorServicePipe`
 
 func createWindowsSecurityDescriptor() (sd *windows.SECURITY_DESCRIPTOR, err error) {
-	// 1. Create SID
-	var allowedUserSID *windows.SID
-	err = windows.AllocateAndInitializeSid(
-		&windows.SidIdentifierAuthority{Value: [6]byte{0, 0, 0, 0, 0, 5}}, // NT Authority
-		2,                                    // sub-authorities
-		windows.SECURITY_BUILTIN_DOMAIN_RID,  // 0x20
-		windows.DOMAIN_ALIAS_RID_POWER_USERS, // 0x220
-		0, 0, 0, 0, 0, 0,
-		&allowedUserSID,
-	)
-	// allowedUserSID, err = windows.CreateWellKnownSid(windows.WinAccountAdministratorSid)
+
+	authSID, err := windows.CreateWellKnownSid(windows.WinAuthenticatedUserSid)
 	if err != nil {
 		return nil, err
 	}
-	log.Println(utils.FileAndLineStr() + allowedUserSID.String())
-	defer windows.FreeSid(allowedUserSID)
-	// 2. read/write ACL
-
+	log.Println(utils.FileAndLineStr() + authSID.String())
+	// !! DO NOT FREE, created using CreateWellKnownSid
+	// defer windows.FreeSid(authSID)
+	adminSID, err := windows.CreateWellKnownSid(windows.WinBuiltinAdministratorsSid)
+	if err != nil {
+		return nil, err
+	}
+	log.Println(utils.FileAndLineStr() + adminSID.String())
+	// !! DO NOT FREE, created using CreateWellKnownSid
+	// defer windows.FreeSid(adminSID)
 	explicitAcces := []windows.EXPLICIT_ACCESS{
 		{
 			AccessPermissions: windows.GENERIC_READ | windows.GENERIC_WRITE,
@@ -69,7 +66,17 @@ func createWindowsSecurityDescriptor() (sd *windows.SECURITY_DESCRIPTOR, err err
 			Trustee: windows.TRUSTEE{
 				TrusteeForm:  windows.TRUSTEE_IS_SID,
 				TrusteeType:  windows.TRUSTEE_IS_GROUP,
-				TrusteeValue: windows.TrusteeValueFromSID(allowedUserSID),
+				TrusteeValue: windows.TrusteeValueFromSID(authSID),
+			},
+		},
+		{
+			AccessPermissions: windows.GENERIC_READ | windows.GENERIC_WRITE,
+			AccessMode:        windows.GRANT_ACCESS,
+			Inheritance:       windows.NO_INHERITANCE,
+			Trustee: windows.TRUSTEE{
+				TrusteeForm:  windows.TRUSTEE_IS_SID,
+				TrusteeType:  windows.TRUSTEE_IS_GROUP,
+				TrusteeValue: windows.TrusteeValueFromSID(adminSID),
 			},
 		},
 	}
@@ -89,6 +96,7 @@ func createWindowsSecurityDescriptor() (sd *windows.SECURITY_DESCRIPTOR, err err
 		return nil, err
 	}
 	return securityDescriptor, nil
+
 }
 func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
 	var incomingJson interface{}
