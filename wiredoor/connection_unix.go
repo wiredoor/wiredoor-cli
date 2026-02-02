@@ -124,5 +124,19 @@ func interfaceExists() bool {
 	//
 	cmd := exec.Command("ip", "link", "show", "wg0")
 	return cmd.Run() == nil
+	// !! TODO test using go api
+	/*
+		if interfaces, err := net.Interfaces(); err == nil {
+			for i := 0; i < len(interfaces); i++ {
+				if interfaces[i].Name == tunnelName {
+					return true
+				}
+			}
+			return false
+		} else {
+			log.Printf("error on list interface names: %v", err)
+			return false
+		}
+	*/
 
 }

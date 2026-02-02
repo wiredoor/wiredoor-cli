@@ -40,9 +40,9 @@ command format:
 
 `
 */
-var WiredoorPipePathName string = `\\.\pipe\wiredoorServicePipe`
 
 func createWindowsSecurityDescriptor() (sd *windows.SECURITY_DESCRIPTOR, err error) {
+	// windows.LookupSID()
 
 	authSID, err := windows.CreateWellKnownSid(windows.WinAuthenticatedUserSid)
 	if err != nil {
@@ -208,7 +208,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 
 		for {
 			wiredoorPipeHandle, err := windows.CreateNamedPipe(
-				windows.StringToUTF16Ptr(WiredoorPipePathName),
+				windows.StringToUTF16Ptr(utils.WiredoorPipePathName),
 				windows.PIPE_ACCESS_DUPLEX|windows.FILE_FLAG_OVERLAPPED|windows.FILE_FLAG_FIRST_PIPE_INSTANCE,
 				windows.PIPE_TYPE_MESSAGE|windows.PIPE_READMODE_MESSAGE|windows.PIPE_WAIT|windows.PIPE_REJECT_REMOTE_CLIENTS,
 				1,
@@ -342,7 +342,7 @@ Examples:
 				//never
 				log.Println(utils.FileAndLineStr() + "Warinig:Fail to create log file")
 			}
-			err = svc.Run(wiredoor.WiredoorServiceName, &wiredoorWindowsService{})
+			err = svc.Run(utils.WiredoorServiceName, &wiredoorWindowsService{})
 			if err != nil {
 				log.Print(utils.FileAndLineStr() + "Fail to start service mode\n")
 				os.Exit(1)

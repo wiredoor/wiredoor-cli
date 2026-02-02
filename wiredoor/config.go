@@ -11,7 +11,7 @@ import (
 )
 
 // !TODO search for dependencies on var configFile
-var configFile = getConfigLocation()
+var configFile = GetConfigLocation()
 
 var defaultConfig = map[string]map[string]string{
 	"server": {
@@ -47,11 +47,11 @@ type Config struct {
 	Daemon DaemonConfig
 }
 
-func getConfigLocation() string {
+func GetConfigLocation() string {
 	currentOS := runtime.GOOS
 	switch currentOS {
 	case "windows":
-		return os.Getenv("APPDATA") + "/wiredoor/config.ini"
+		return os.Getenv("PROGRAMDATA") + "/wiredoor/config.ini"
 	case "linux":
 		return "/etc/wiredoor/config.ini"
 	default:
@@ -59,17 +59,18 @@ func getConfigLocation() string {
 	}
 }
 
-func SaveServerConfig(server string, token string) {
+func SaveServerConfig(server string, token string) error {
 	cfg, err := getIniFile()
 
 	if err != nil {
-		log.Fatalf("Unable to get configuration file: %v", err)
+		log.Printf("Unable to get configuration file: %v", err)
+		return err
 	}
 
 	cfg.Section("server").Key("url").SetValue(server)
 	cfg.Section("server").Key("token").SetValue(token)
 
-	cfg.SaveTo(configFile)
+	return cfg.SaveTo(configFile)
 }
 
 func SaveDaemonConfig(useDaemon bool) {

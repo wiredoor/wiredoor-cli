@@ -55,7 +55,7 @@ Examples:
 
 		//1 connect to pipe to read/write non blocking capable
 		wiredoorPipeHandle, err := windows.CreateFile(
-			windows.StringToUTF16Ptr(WiredoorPipePathName),
+			windows.StringToUTF16Ptr(utils.WiredoorPipePathName),
 			windows.GENERIC_READ|windows.GENERIC_WRITE,
 			0,
 			nil,
