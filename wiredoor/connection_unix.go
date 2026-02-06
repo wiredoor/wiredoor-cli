@@ -8,10 +8,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
+
+	"github.com/wiredoor/wiredoor-cli/utils"
 )
 
-// var interfaceName = "wg0"
-var configFilename = "wg0.conf"
+var configFilename = utils.TunnelName + ".conf"
 
 type ConnectionConfig struct {
 	URL       string
@@ -78,7 +79,7 @@ func manualLinuxConnect() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	up := exec.Command("bash", "-c", "wg-quick up wg0") // wg-quick down wg0 > /dev/null &2>1
+	up := exec.Command("bash", "-c", "wg-quick up "+utils.TunnelName) // wg-quick down wg0 > /dev/null &2>1
 
 	if IsDaemonEnabled() {
 		RestartService()
@@ -91,7 +92,7 @@ func manualLinuxConnect() {
 }
 
 func manualLinuxRestart() {
-	restart := exec.Command("bash", "-c", "wg-quick down wg0 && wg-quick up wg0") // wg-quick down wg0 > /dev/null &2>1
+	restart := exec.Command("bash", "-c", "wg-quick down "+utils.TunnelName+" && wg-quick up "+utils.TunnelName) // wg-quick down wg0 > /dev/null &2>1
 	if err := restart.Run(); err != nil {
 		log.Fatal("Error: Unable to restart the tunnel, please review your user permissions or if you are inside container ensure that you have added the capability NET_ADMIN")
 	}
@@ -100,7 +101,7 @@ func manualLinuxRestart() {
 func manualLinuxDisconnect() {
 	if ExistWireguardConfigFile() {
 		log.Println("Disconecting...")
-		down := exec.Command("bash", "-c", "wg-quick down wg0") // wg-quick down wg0 > /dev/null &2>1
+		down := exec.Command("bash", "-c", "wg-quick down "+utils.TunnelName) // wg-quick down wg0 > /dev/null &2>1
 
 		if IsDaemonEnabled() {
 			StopService()
@@ -122,13 +123,13 @@ func ExistWireguardConfigFile() bool {
 
 func interfaceExists() bool {
 	//
-	cmd := exec.Command("ip", "link", "show", "wg0")
+	cmd := exec.Command("ip", "link", "show", utils.TunnelName)
 	return cmd.Run() == nil
 	// !! TODO test using go api
 	/*
 		if interfaces, err := net.Interfaces(); err == nil {
 			for i := 0; i < len(interfaces); i++ {
-				if interfaces[i].Name == tunnelName {
+				if interfaces[i].Name == utils.TunnelName {
 					return true
 				}
 			}

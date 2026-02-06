@@ -10,7 +10,7 @@ import (
 
 func Status() {
 	if !WireguardInterfaceExists() {
-		fmt.Println("❌ WireGuard interface 'wg0' is not active.")
+		fmt.Println("❌ WireGuard interface " + utils.TunnelName + " is not active.")
 		fmt.Println("Run 'wiredoor connect' to establish the tunnel.")
 		return
 	}
@@ -29,7 +29,7 @@ func Status() {
 
 func Health() {
 	if !WireguardInterfaceExists() {
-		fmt.Println("❌ WireGuard interface 'wg0' is not active.")
+		fmt.Println("❌ WireGuard interface " + utils.TunnelName + " is not active.")
 		os.Exit(1)
 		return
 	}

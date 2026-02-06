@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -16,9 +17,9 @@ import (
 	// "golang.org/x/sys/windows" //windows admin
 )
 
-// var interfaceName = "wg0"
-var tunnelName = "wg0" //used to stop service
-var configFilename = tunnelName + ".conf"
+// // var interfaceName = "wg0"
+// var TunnelName = "Wiredoor_Tunnel" //used to stop service
+var configFilename = utils.TunnelName + ".conf"
 
 // system paths
 var wireguardConfigFolder = os.Getenv("PROGRAMDATA") + "\\wiredoor\\"
@@ -30,13 +31,22 @@ type ConnectionConfig struct {
 	SetDaemon bool
 }
 
-// type WireGuardConfig struct {
-// 	PrivateKey wgtypes.Key
-// 	Peers      []wgtypes.PeerConfig
-// }
+//	type WireGuardConfig struct {
+//		PrivateKey wgtypes.Key
+//		Peers      []wgtypes.PeerConfig
+//	}
+func init() {
+	// create folder to save configs
+	dir := filepath.Dir(wireguardConfigFolder)
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		log.Printf(utils.FileAndLineStr()+"Error creting path %s : %v", wireguardConfigFolder, err)
+	}
+
+}
 
 func Connect(connection ConnectionConfig) {
-	ensureRoot()
+	// ensureRoot()
 
 	if connection.URL != "" && connection.Token != "" {
 		SaveServerConfig(connection.URL, connection.Token)
@@ -68,8 +78,6 @@ func Connect(connection ConnectionConfig) {
 				break
 			}
 		}
-		//service mode :|
-		// Status()
 
 		// if ExistWireguardConfigFile() {
 		// 	_ = os.Remove(wireguardConfigFolder + configFilename)
@@ -84,7 +92,7 @@ func RestartTunnel() {
 }
 
 func Disconnect() {
-	ensureRoot()
+	// ensureRoot()
 	manualWindowsDisconnect()
 }
 
@@ -135,7 +143,7 @@ func manualWindowsConnect() {
 	//iniciar servicio
 	//sc start WireGuardTunnel$wg0
 	//!TODO Move to native service api
-	start := exec.Command("sc", "start", "WireGuardTunnel$"+tunnelName)
+	start := exec.Command("sc", "start", "WireGuardTunnel$"+utils.TunnelName)
 	if err := start.Run(); err != nil {
 		errorStr := err.Error()
 		if strings.Contains(errorStr, "1056") {
@@ -158,12 +166,12 @@ func manualWindowsConnect() {
 
 func manualWindowsRestart() {
 	//sc stop WireGuardTunnel$wg0
-	stop := exec.Command("sc", "stop", "WireGuardTunnel$"+tunnelName)
+	stop := exec.Command("sc", "stop", "WireGuardTunnel$"+utils.TunnelName)
 	if err := stop.Run(); err != nil {
 		log.Println("Warinig: Unable to stop tunnel service")
 	}
-	//sc start WireGuardTunnel$wg11
-	start := exec.Command("sc", "start", "WireGuardTunnel$"+tunnelName)
+	//sc start WireGuardTunnel$wg0
+	start := exec.Command("sc", "start", "WireGuardTunnel$"+utils.TunnelName)
 	if err := start.Run(); err != nil {
 		log.Println("Warinig: Unable to start tunnel service")
 	}
@@ -173,20 +181,20 @@ func manualWindowsDisconnect() {
 
 	log.Println("Disconecting...")
 
-	exists, err := utils.ServiceExists("WireGuardTunnel$" + tunnelName)
+	exists, err := utils.ServiceExists("WireGuardTunnel$" + utils.TunnelName)
 	if err != nil {
 		log.Printf("Warning, unable to determine if tunnel service exists, assuming true : %v", err)
 		exists = true
 	}
 	if exists {
 		//sc stop WireGuardTunnel$wg0
-		stop := exec.Command("sc", "stop", "WireGuardTunnel$"+tunnelName)
+		stop := exec.Command("sc", "stop", "WireGuardTunnel$"+utils.TunnelName)
 		if err := stop.Run(); err != nil {
 			log.Printf("Warnig: Unable to stop tunnel service: %v \n", err)
 		}
 
 		//wireguard /uninstalltunnelservice wg0
-		down := exec.Command("wireguard", "/uninstalltunnelservice", tunnelName)
+		down := exec.Command("wireguard", "/uninstalltunnelservice", utils.TunnelName)
 		if err := down.Run(); err != nil {
 			log.Printf("Error: Unable to disconnect wireguard tunnel: %v", err)
 		}
@@ -197,7 +205,7 @@ func manualWindowsDisconnect() {
 	if err != nil {
 		amIservice = false
 	}
-	if IsDaemonEnabled() {
+	if IsDaemonEnabled() { //not used
 		if !amIservice {
 			utils.StopService(utils.WiredoorServiceName)
 			utils.DisableService(utils.WiredoorServiceName)
@@ -217,7 +225,7 @@ func ExistWireguardConfigFile() bool {
 
 func interfaceExists() bool {
 	// netsh interface show interface wg11
-	// cmd := exec.Command("netsh", "interface", "show", "interface", tunnelName) //wg0
+	// cmd := exec.Command("netsh", "interface", "show", "interface", utils.TunnelName) //wg0
 	// err := cmd.Run()
 	// if err != nil {
 	// 	// log.Printf(utils.FileAndLineStr()+"Wireguard interface does not exist, %v", err)
@@ -225,11 +233,11 @@ func interfaceExists() bool {
 	// }
 	// return true
 
-	//!!TODO move to internal api, netsh needs Admin priv
+	//!! move to internal api, netsh needs Admin priv
 
 	if interfaces, err := net.Interfaces(); err == nil {
 		for i := 0; i < len(interfaces); i++ {
-			if interfaces[i].Name == tunnelName /*&& (interfaces[i].Flags&net.FlagUp != 0) */ {
+			if interfaces[i].Name == utils.TunnelName /*&& (interfaces[i].Flags&net.FlagUp != 0) */ {
 				return true
 			}
 		}

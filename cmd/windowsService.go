@@ -139,6 +139,15 @@ func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
 						log.Printf(utils.FileAndLineStr()+"error when write to pipe: %v", err)
 					}
 
+				case "regenerate":
+					wiredoor.Disconnect()
+					wiredoor.RegenerateKeys()
+					var writtenLen uint32
+					responseData := []byte(`{"response":"ok"}`)
+					err := windows.WriteFile(wiredoorPipeHandle, responseData, &writtenLen, nil)
+					if err != nil {
+						log.Printf(utils.FileAndLineStr()+"error when write to pipe: %v", err)
+					}
 				default:
 					log.Printf(utils.FileAndLineStr()+"invalid command : %v", commandStr)
 				}
@@ -252,7 +261,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 						log.Printf(utils.FileAndLineStr()+"server listen error: %v", err)
 					}
 				} else {
-					log.Printf(utils.FileAndLineStr() + "bad error cast\n")
+					log.Printf(utils.FileAndLineStr() + "bad cast error\n")
 				}
 			}
 			// wait incoming data

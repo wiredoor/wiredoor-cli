@@ -19,10 +19,10 @@ import (
 
 func installService() error {
 	fmt.Printf("Installing ...\n")
-	user, password, err := utils.CreateServiceAccount(utils.WIredoorServiceUserName)
-	if err != nil {
-		log.Printf("error creating dedicated user for service, using systemwide default user:\n%v\n", err)
-	}
+	// user, password, err := utils.CreateServiceAccount(utils.WIredoorServiceUserName)
+	// if err != nil {
+	// 	log.Printf("error creating dedicated user for service, using systemwide default user:\n%v\n", err)
+	// }
 	running, err := utils.WiredoorServiceRunning()
 	if err != nil {
 		return fmt.Errorf("error when determine service status: %v", err)
@@ -41,18 +41,18 @@ func installService() error {
 		}
 		time.Sleep(3 * time.Second)
 	}
-	err = utils.CreateServiceFromThisExecutable(utils.WiredoorServiceName, user, password)
+	// err = utils.CreateServiceFromThisExecutable(utils.WiredoorServiceName, user, password)
+	// if err != nil {
+	// 	//policy fail
+	// 	log.Printf("Warninig, when install wiredoor service using alternate user, using default SYSTEM service user  : %v", err)
+	// 	if err = utils.DeleteUser(user); err != nil {
+	// 		log.Printf("Warninig, error on cleanup TMP user : %v", err)
+	// 	}
+	err = utils.CreateServiceFromThisExecutable(utils.WiredoorServiceName, "", "")
 	if err != nil {
-		//policy fail
-		log.Printf("Warninig, when install wiredoor service using alternate user, using default SYSTEM service user  : %v", err)
-		if err = utils.DeleteUser(user); err != nil {
-			log.Printf("Warninig, error on cleanup TMP user : %v", err)
-		}
-		err = utils.CreateServiceFromThisExecutable(utils.WiredoorServiceName, "", "")
-		if err != nil {
-			return fmt.Errorf("error instaling wiredoor service: %v", err)
-		}
+		return fmt.Errorf("error instaling wiredoor service: %v", err)
 	}
+	// }
 	err = utils.StartService(utils.WiredoorServiceName)
 	if err != nil {
 		return fmt.Errorf("error starting wiredoor service: %v", err)
