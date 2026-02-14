@@ -100,7 +100,7 @@ var installCmd = &cobra.Command{
 			}
 			err = svc.Run("InstaladorSvc", &wiredoorInstallerService{})
 			if err != nil {
-				log.Print(utils.FileAndLineStr() + "Fail to start service mode\n")
+				log.Print("Fail to start service mode\n")
 				os.Exit(1)
 			}
 		} else {

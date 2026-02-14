@@ -8,7 +8,6 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
 )
 
@@ -49,7 +48,7 @@ Afterwards, simply run:
 
 		err := wiredoor.SaveServerConfig(server, token)
 		if err != nil {
-			log.Printf(utils.FileAndLineStr()+"unable to save config file: %v", err)
+			log.Printf("unable to save config file: %v", err)
 			return
 		}
 		fmt.Println("✅ Configuration saved to " + wiredoor.GetConfigLocation())

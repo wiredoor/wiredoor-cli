@@ -79,6 +79,7 @@ func manualLinuxConnect() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//take care of spaces
 	up := exec.Command("bash", "-c", "wg-quick up "+utils.TunnelName) // wg-quick down wg0 > /dev/null &2>1
 
 	if IsDaemonEnabled() {

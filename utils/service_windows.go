@@ -113,8 +113,8 @@ func DeleteService(serviceName string) error {
 	if serviceConnection, err := serviceMangerConnection.OpenService(serviceName); err == nil {
 		defer serviceConnection.Close()
 		if err := serviceConnection.Delete(); err != nil {
-			log.Printf("unable to start service: %v", err)
-			return fmt.Errorf("unable to start service: %v", err)
+			log.Printf("unable to delete service: %v", err)
+			return fmt.Errorf("unable to delete service: %v", err)
 		}
 		return nil
 	} else {

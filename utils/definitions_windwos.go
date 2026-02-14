@@ -5,3 +5,4 @@ package utils
 
 // var interfaceName = "wg0"
 var TunnelName = "Wiredoor_Tunnel" //
+// var TunnelName = "wg0"             //

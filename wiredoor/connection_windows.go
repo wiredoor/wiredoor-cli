@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -35,15 +34,6 @@ type ConnectionConfig struct {
 //		PrivateKey wgtypes.Key
 //		Peers      []wgtypes.PeerConfig
 //	}
-func init() {
-	// create folder to save configs
-	dir := filepath.Dir(wireguardConfigFolder)
-
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		log.Printf(utils.FileAndLineStr()+"Error creting path %s : %v", wireguardConfigFolder, err)
-	}
-
-}
 
 func Connect(connection ConnectionConfig) {
 	// ensureRoot()
@@ -130,7 +120,7 @@ func manualWindowsConnect() {
 	config := GetNodeConfig()
 	err := os.WriteFile(wireguardConfigFolder+configFilename, []byte(config), 0600)
 	if err != nil {
-		log.Printf(utils.FileAndLineStr()+"error on write cfg,%v", err)
+		log.Printf("error on write cfg,%v", err)
 		return
 	}
 	//wireguard /installtunnelservice full_file_path
@@ -198,7 +188,6 @@ func manualWindowsDisconnect() {
 		if err := down.Run(); err != nil {
 			log.Printf("Error: Unable to disconnect wireguard tunnel: %v", err)
 		}
-
 	}
 
 	amIservice, err := svc.IsWindowsService()
@@ -218,7 +207,7 @@ func manualWindowsDisconnect() {
 }
 
 func ExistWireguardConfigFile() bool {
-	// log.Printf(utils.FileAndLineStr()+"Wireguard cfg: %s", wireguardConfigFolder+configFilename)
+	// log.Printf("Wireguard cfg: %s", wireguardConfigFolder+configFilename)
 	_, err := os.Stat(wireguardConfigFolder + configFilename)
 	return err == nil
 }
@@ -228,7 +217,7 @@ func interfaceExists() bool {
 	// cmd := exec.Command("netsh", "interface", "show", "interface", utils.TunnelName) //wg0
 	// err := cmd.Run()
 	// if err != nil {
-	// 	// log.Printf(utils.FileAndLineStr()+"Wireguard interface does not exist, %v", err)
+	// 	// log.Printf("Wireguard interface does not exist, %v", err)
 	// 	return false
 	// }
 	// return true

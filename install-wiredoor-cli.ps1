@@ -155,45 +155,49 @@ Write-Info "Try: wiredoor --help"
 # Install Service
 # -----------------------------
 #stop previous version
-# sc stop wiredoorService
+sc stop wiredoorService
+
 #delete previous
+# Stop-Service -Name $ServiceName -Force
 sc delete wiredoorService
 
 $TargetExe --install
+
 #sc create wiredoorService binPath= "\"$TargetExe\" service --serviceInterval 10" start= auto obj= LocalSystem
-#sc start wiredoorService
+#
+sc start wiredoorService
 
 # ================================
 # Variables de configuración
 # ================================
-$ServiceName   = "wiredoorService"
-$ExePath       = "$TargetExe"
+# $ServiceName   = "wiredoorService"
+# $ExePath       = "$TargetExe"
 
 # # ================================
 # # remove previous service
 # # ================================
-$svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
-if ($svc) {
-    if ($svc.Status -eq [System.ServiceProcess.ServiceControllerStatus]::Running) {
-        Stop-Service -Name $ServiceName -Force
-    }
-    sc.exe delete $ServiceName | Out-Null
-    Start-Sleep -Seconds 2
-}
+# $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+# if ($svc) {
+    # if ($svc.Status -eq [System.ServiceProcess.ServiceControllerStatus]::Running) {
+        # Stop-Service -Name $ServiceName -Force
+    # }
+    # sc.exe delete $ServiceName | Out-Null
+    # Start-Sleep -Seconds 2
+# }
 # # ================================
 # # install service as custom user
 # # ================================
 
-$ExePath install
+# $ExePath install
 
 # # ================================
 # # 7. Verify completion
 # # ================================
-$svcFinal = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
-if ($svcFinal -and $svcFinal.Status -eq [System.ServiceProcess.ServiceControllerStatus]::Running) {
-    Write-Host "`n✅ Servicio $ServiceName instalado e iniciado correctamente bajo la cuenta $UserName."
-    Write-Host "🔐 Contraseña generada: $Password"
-} else {
-    Write-Host "`n❌ Error: el servicio $ServiceName no se inició correctamente."
-}
+# $svcFinal = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+# if ($svcFinal -and $svcFinal.Status -eq [System.ServiceProcess.ServiceControllerStatus]::Running) {
+    # Write-Host "`n✅ Servicio $ServiceName instalado e iniciado correctamente bajo la cuenta $UserName."
+    # Write-Host "🔐 Contraseña generada: $Password"
+# } else {
+    # Write-Host "`n❌ Error: el servicio $ServiceName no se inició correctamente."
+# }
 

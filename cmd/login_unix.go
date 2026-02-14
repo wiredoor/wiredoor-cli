@@ -1,6 +1,10 @@
+//go:build !windows
+// +build !windows
+
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 */
+
 package cmd
 
 import (
@@ -115,10 +119,10 @@ Prompts will guide you through the registration and configuration process.`,
 		}, &allowInternet)
 
 		node, err := wiredoor.ConfigureNode(url, token, wiredoor.NodeParams{
-			Name:           nodeName,
-			IsGateway:      isGateway,
+			Name:            nodeName,
+			IsGateway:       isGateway,
 			GatewayNetworks: gatewayNetworks,
-			AllowInternet:  allowInternet,
+			AllowInternet:   allowInternet,
 		})
 
 		if err != nil {

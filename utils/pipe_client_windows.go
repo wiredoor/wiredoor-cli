@@ -38,7 +38,7 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 		0)
 
 	if err != nil {
-		return nil, fmt.Errorf(FileAndLineStr()+"error opening service pipe, is service running? : %v", err)
+		return nil, fmt.Errorf("error opening service pipe, is service running? : %v", err)
 	}
 	defer windows.CloseHandle(wiredoorPipeHandle)
 	//2 send connect message
@@ -47,13 +47,13 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 		var writtenLen uint32
 		err := windows.WriteFile(wiredoorPipeHandle, data, &writtenLen, nil)
 		if err != nil {
-			return nil, fmt.Errorf(FileAndLineStr()+"error when write to pipe: %v", err)
+			return nil, fmt.Errorf("error when write to pipe: %v", err)
 		}
 		if int(writtenLen) != len(data) {
-			log.Printf(FileAndLineStr()+"Warninig message not fully sended, sended %v of %v bytes", writtenLen, len(data))
+			log.Printf("Warninig message not fully sended, sended %v of %v bytes", writtenLen, len(data))
 		}
 	} else {
-		return nil, fmt.Errorf(FileAndLineStr()+"Marshal error :%v\n", err)
+		return nil, fmt.Errorf("marshal error: %v", err)
 	}
 	//3 wait for response or termination for check status
 	readChanErr := make(chan error, 1)
@@ -70,13 +70,13 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 
 			err := windows.ReadFile(wiredoorPipeHandle, readBuff, &readLen, readOverlaped)
 			if err != nil && err != windows.ERROR_IO_PENDING {
-				log.Printf(FileAndLineStr()+"overlaped read error: %v", err)
+				log.Printf("overlaped read error: %v", err)
 				return
 			}
 			// 10 seconds = 10000 miliseconds
 			readStatus, err := windows.WaitForSingleObject(readOverlaped.HEvent, uint32(10000))
 			if err != nil {
-				log.Printf(FileAndLineStr()+"event wait error: %v", err)
+				log.Printf("event wait error: %v", err)
 				return
 			}
 			switch readStatus {
@@ -84,7 +84,7 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 				//HURRA
 				err = windows.GetOverlappedResult(wiredoorPipeHandle, readOverlaped, &readLen, true)
 				if err != nil {
-					log.Printf(FileAndLineStr()+"err on get overlaped result: %v", err)
+					log.Printf("err on get overlaped result: %v", err)
 					return
 				}
 			case uint32(windows.WAIT_TIMEOUT):
@@ -92,7 +92,7 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 			}
 			readChanErr <- err
 		} else {
-			log.Printf(FileAndLineStr()+"event creation error: %v", err)
+			log.Printf("event creation error: %v", err)
 			return
 		}
 		readChanErr <- nil
@@ -100,13 +100,13 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 	//end ruitine
 	select {
 	case <-time.After(10 * time.Second):
-		log.Printf(FileAndLineStr() + "Warinig, service response timed out after 10 seconds")
+		log.Printf("Warinig, service response timed out after 10 seconds")
 	case err, ok := <-readChanErr:
 		if !ok {
-			return nil, fmt.Errorf(FileAndLineStr() + "I/O error,read channel closed")
+			return nil, fmt.Errorf("I/O error,read channel closed")
 		}
 		if err != nil {
-			return nil, fmt.Errorf(FileAndLineStr()+"read pipe error: %v", err)
+			return nil, fmt.Errorf("read pipe error: %v", err)
 		}
 		data := readBuff[:readLen]
 		return data, nil

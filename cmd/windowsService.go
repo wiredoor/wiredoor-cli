@@ -48,14 +48,14 @@ func createWindowsSecurityDescriptor() (sd *windows.SECURITY_DESCRIPTOR, err err
 	if err != nil {
 		return nil, err
 	}
-	log.Println(utils.FileAndLineStr() + authSID.String())
+	log.Println(authSID.String())
 	// !! DO NOT FREE, created using CreateWellKnownSid
 	// defer windows.FreeSid(authSID)
 	adminSID, err := windows.CreateWellKnownSid(windows.WinBuiltinAdministratorsSid)
 	if err != nil {
 		return nil, err
 	}
-	log.Println(utils.FileAndLineStr() + adminSID.String())
+	log.Println(adminSID.String())
 	// !! DO NOT FREE, created using CreateWellKnownSid
 	// defer windows.FreeSid(adminSID)
 	explicitAcces := []windows.EXPLICIT_ACCESS{
@@ -120,13 +120,15 @@ func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
 								Token:     token,
 								UseDaemon: true,
 								SetDaemon: false})
+					} else {
+						log.Printf("Ignore connect: Wireguard Interface Exists")
 					}
 					//response
 					var writtenLen uint32
 					responseData := []byte(`{"response":"ok"}`)
 					err := windows.WriteFile(wiredoorPipeHandle, responseData, &writtenLen, nil)
 					if err != nil {
-						log.Printf(utils.FileAndLineStr()+"error when write to pipe: %v", err)
+						log.Printf("error when write to pipe: %v", err)
 					}
 
 				case "disconnect":
@@ -136,7 +138,7 @@ func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
 					responseData := []byte(`{"response":"ok"}`)
 					err := windows.WriteFile(wiredoorPipeHandle, responseData, &writtenLen, nil)
 					if err != nil {
-						log.Printf(utils.FileAndLineStr()+"error when write to pipe: %v", err)
+						log.Printf("error when write to pipe: %v", err)
 					}
 
 				case "regenerate":
@@ -146,18 +148,18 @@ func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
 					responseData := []byte(`{"response":"ok"}`)
 					err := windows.WriteFile(wiredoorPipeHandle, responseData, &writtenLen, nil)
 					if err != nil {
-						log.Printf(utils.FileAndLineStr()+"error when write to pipe: %v", err)
+						log.Printf("error when write to pipe: %v", err)
 					}
 				default:
-					log.Printf(utils.FileAndLineStr()+"invalid command : %v", commandStr)
+					log.Printf("invalid command : %v", commandStr)
 				}
 			} else {
-				log.Printf(utils.FileAndLineStr()+"invalid command type: %v", string(data))
+				log.Printf("invalid command type: %v", string(data))
 			}
 		}
 
 	} else {
-		log.Printf(utils.FileAndLineStr()+"error on json decoding `data section(`%s`)` : %v", string(data), err)
+		log.Printf("error on json decoding `data section(`%s`)` : %v", string(data), err)
 	}
 }
 
@@ -200,10 +202,10 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 
 	go func() {
 
-		// log.Printf(utils.FileAndLineStr() + "wiredoorPipeSecurityAttributes")
+		// log.Printf("wiredoorPipeSecurityAttributes")
 		sd, err := createWindowsSecurityDescriptor()
 		if err != nil {
-			log.Printf(utils.FileAndLineStr()+"Error creating windows security descriptor: %v", err)
+			log.Printf("Error creating windows security descriptor: %v", err)
 		}
 
 		wiredoorPipeSecurityAttributes := windows.SecurityAttributes{
@@ -211,7 +213,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 			InheritHandle:      1,
 			SecurityDescriptor: sd,
 		}
-		// log.Printf(utils.FileAndLineStr() + "wiredoorPipeSecurityAttributes done")
+		// log.Printf("wiredoorPipeSecurityAttributes done")
 
 		//open server side pipe
 
@@ -228,44 +230,44 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 				// nil,
 			)
 			if err != nil {
-				log.Printf(utils.FileAndLineStr()+"error creating pipe server on service,%v", err)
+				log.Printf("error creating pipe server on service,%v", err)
 				os.Exit(1)
 			}
-			log.Printf(utils.FileAndLineStr() + "CreateNamedPipe done")
+			log.Printf("CreateNamedPipe done")
 
 			//wait client
 			err = windows.ConnectNamedPipe(wiredoorPipeHandle, nil)
 			pipeReady := false
 			if err == nil {
-				log.Printf(utils.FileAndLineStr() + "Pipe created\n")
+				log.Printf("Pipe created\n")
 				pipeReady = true
 			} else {
 				if errno, ok := err.(syscall.Errno); ok {
 					switch errno {
 					case windows.ERROR_PIPE_CONNECTED:
-						log.Printf(utils.FileAndLineStr() + "ERROR_PIPE_CONNECTED\n")
+						log.Printf("ERROR_PIPE_CONNECTED\n")
 						pipeReady = true
 					case windows.ERROR_NO_DATA:
-						log.Printf(utils.FileAndLineStr()+"ERROR_NO_DATA Pipe closed: %w\n", err)
+						log.Printf("ERROR_NO_DATA Pipe closed: %w\n", err)
 					case windows.ERROR_PIPE_LISTENING: // not ready, continue
-						log.Printf(utils.FileAndLineStr() + "ERROR_PIPE_LISTENING not ready,listening\n")
+						log.Printf("ERROR_PIPE_LISTENING not ready,listening\n")
 					case windows.ERROR_PIPE_BUSY:
-						log.Println(utils.FileAndLineStr() + "ERROR_PIPE_BUSY")
+						log.Println("ERROR_PIPE_BUSY")
 					case windows.ERROR_INVALID_HANDLE:
-						log.Printf(utils.FileAndLineStr()+"ERROR_INVALID_HANDLE invalid server handle: %v", err)
+						log.Printf("ERROR_INVALID_HANDLE invalid server handle: %v", err)
 					case windows.ERROR_ACCESS_DENIED:
-						log.Printf(utils.FileAndLineStr() + "ERROR_ACCESS_DENIED")
+						log.Printf("ERROR_ACCESS_DENIED")
 					case windows.ERROR_OPERATION_ABORTED:
-						log.Printf(utils.FileAndLineStr() + "ERROR_OPERATION_ABORTED")
+						log.Printf("ERROR_OPERATION_ABORTED")
 					default:
-						log.Printf(utils.FileAndLineStr()+"server listen error: %v", err)
+						log.Printf("server listen error: %v", err)
 					}
 				} else {
-					log.Printf(utils.FileAndLineStr() + "bad cast error\n")
+					log.Printf("bad cast error\n")
 				}
 			}
 			// wait incoming data
-			log.Printf(utils.FileAndLineStr() + "Start reading")
+			log.Printf("Start reading")
 			if pipeReady {
 				var numBytes uint32
 				buff := make([]byte, 1024)
@@ -279,31 +281,31 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 					manageIncomingData(data, wiredoorPipeHandle)
 
 				} else {
-					log.Printf(utils.FileAndLineStr()+"error reading pipe: %v", err)
+					log.Printf("error reading pipe: %v", err)
 				}
 			} else {
-				log.Printf(utils.FileAndLineStr() + "pipe not ready")
+				log.Printf("pipe not ready")
 			}
 			windows.CloseHandle(wiredoorPipeHandle)
 		}
 	}()
 	s <- svc.Status{State: svc.Running, Accepts: svc.AcceptStop | svc.AcceptShutdown}
-	log.Printf(utils.FileAndLineStr() + "Start service\n")
+	log.Printf("Start service\n")
 	for {
 		c := <-r
 		switch c.Cmd {
 		case svc.Stop, svc.Shutdown:
 			s <- svc.Status{State: svc.StopPending} //notify status
-			log.Printf(utils.FileAndLineStr() + "Stop service\n")
+			log.Printf("Stop service\n")
 			//alert runing goroutine
 			close(routineComs)
 			//wait for cleanup
-			log.Printf(utils.FileAndLineStr() + "Wait for cleanup\n")
+			log.Printf("Wait for cleanup\n")
 			//do not stop monitoring when running
 			monitoringMutex.Lock()
 
 			waitGroupMonitor.Wait()
-			log.Printf(utils.FileAndLineStr() + "The end\n")
+			log.Printf("The end\n")
 			return false, 0
 		default:
 		}
@@ -342,25 +344,15 @@ Examples:
 			log.Fatal(err)
 		}
 		if isService {
-			logFileName := os.Getenv("PROGRAMDATA") + "\\WiredoorLastServiceLog.txt"
-			logFile, err := os.Create(logFileName)
-			if err == nil {
-				defer logFile.Close()
-				log.SetOutput(logFile)
-			} else {
-				//never
-				log.Println(utils.FileAndLineStr() + "Warinig:Fail to create log file")
-			}
 			err = svc.Run(utils.WiredoorServiceName, &wiredoorWindowsService{})
 			if err != nil {
-				log.Print(utils.FileAndLineStr() + "Fail to start service mode\n")
+				log.Print("Fail to start service mode\n")
 				os.Exit(1)
 			}
 		} else {
-			log.Print(utils.FileAndLineStr() + "Running as console app, made for run as service ...\n")
+			log.Print("Running as console app, made for run as service ...\n")
 			os.Exit(1)
 		}
-		// }
 	},
 }
 
