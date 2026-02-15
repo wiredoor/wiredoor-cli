@@ -84,8 +84,8 @@ Typical usage:
 						wiredoor.Status()
 						os.Exit(0)
 					default:
-						fmt.Printf("Fail due to unhandled service reposnse: %v", response)
-						log.Printf("unhandled service reposnse: %v", response)
+						fmt.Printf("Error: %v", response)
+						log.Printf("Error: %v", response)
 						os.Exit(1)
 					}
 				} else {

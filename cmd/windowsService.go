@@ -8,6 +8,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -114,53 +115,62 @@ func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
 						token = ""
 					}
 					if !wiredoor.WireguardInterfaceExists() {
-						wiredoor.Connect(
+						err := wiredoor.ConnectApi(
 							wiredoor.ConnectionConfig{
 								URL:       url,
 								Token:     token,
 								UseDaemon: true,
 								SetDaemon: false})
+						if err != nil {
+							log.Printf("connect error: %v", err)
+							sendResponse(fmt.Sprintf("connect error: %v", err), wiredoorPipeHandle)
+						} else {
+							sendResponse("ok", wiredoorPipeHandle)
+						}
 					} else {
-						log.Printf("Ignore connect: Wireguard Interface Exists")
+						log.Printf("Ignored connect: Wireguard Interface Exists")
+						sendResponse("Ignored connect: Wireguard Interface Exists", wiredoorPipeHandle)
 					}
-					//response
-					var writtenLen uint32
-					responseData := []byte(`{"response":"ok"}`)
-					err := windows.WriteFile(wiredoorPipeHandle, responseData, &writtenLen, nil)
-					if err != nil {
-						log.Printf("error when write to pipe: %v", err)
-					}
-
 				case "disconnect":
 					wiredoor.Disconnect()
 					//response
-					var writtenLen uint32
-					responseData := []byte(`{"response":"ok"}`)
-					err := windows.WriteFile(wiredoorPipeHandle, responseData, &writtenLen, nil)
-					if err != nil {
-						log.Printf("error when write to pipe: %v", err)
-					}
+					sendResponse("ok", wiredoorPipeHandle)
 
 				case "regenerate":
 					wiredoor.Disconnect()
-					wiredoor.RegenerateKeys()
-					var writtenLen uint32
-					responseData := []byte(`{"response":"ok"}`)
-					err := windows.WriteFile(wiredoorPipeHandle, responseData, &writtenLen, nil)
-					if err != nil {
-						log.Printf("error when write to pipe: %v", err)
+					if err := wiredoor.RegenerateKeys(); err != nil {
+						sendResponse(fmt.Sprintf("Regenerate error: %v", err), wiredoorPipeHandle)
+					} else {
+						sendResponse("ok", wiredoorPipeHandle)
 					}
 				default:
 					log.Printf("invalid command : %v", commandStr)
+					sendResponse(fmt.Sprintf("invalid command : %v", commandStr), wiredoorPipeHandle)
 				}
 			} else {
 				log.Printf("invalid command type: %v", string(data))
+				sendResponse(fmt.Sprintf("invalid command type: %v", string(data)), wiredoorPipeHandle)
 			}
 		}
 
 	} else {
 		log.Printf("error on json decoding `data section(`%s`)` : %v", string(data), err)
+		sendResponse(fmt.Sprintf("error on json decoding `data section(`%s`)` : %v", string(data), err), wiredoorPipeHandle)
 	}
+}
+func sendResponse(message string, pipeHandle windows.Handle) error {
+	jsonToSend := make(map[string]interface{})
+	jsonToSend["response"] = message
+	var writtenLen uint32
+	responseData, err := json.Marshal(jsonToSend)
+	if err != nil {
+		return fmt.Errorf("marshal error:%v", err)
+	}
+	err = windows.WriteFile(pipeHandle, responseData, &writtenLen, nil)
+	if err != nil {
+		return fmt.Errorf("write to IPC pipe error: %v", err)
+	}
+	return nil
 }
 
 type wiredoorWindowsService struct{}

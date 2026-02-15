@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -339,7 +340,7 @@ func GetNodeWGConfig() WGConfig {
 	return WGConfig{}
 }
 
-func RegenerateKeys() {
+func RegenerateKeys() error {
 	resp := requestApi(apiRequest{Method: "PATCH", Path: "/cli/regenerate"})
 
 	if resp != nil {
@@ -348,7 +349,7 @@ func RegenerateKeys() {
 		err := json.Unmarshal(resp, &node)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 		}
 
 		config := getConfig()
@@ -357,10 +358,14 @@ func RegenerateKeys() {
 			SaveServerConfig(config.Server.Url, node.Token)
 			Connect(ConnectionConfig{})
 		} else {
-			fmt.Println("Error getting new keys.")
-			return
+			if err != nil {
+
+				return fmt.Errorf("error getting new keys. Warning node config error:%v", err)
+			}
+			return fmt.Errorf("error getting new keys.")
 		}
 	}
+	return nil
 }
 
 func ExposeHTTP(service HttpServiceParams, node NodeInfo) {

@@ -4,11 +4,11 @@
 package wiredoor
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/wiredoor/wiredoor-cli/utils"
@@ -34,12 +34,13 @@ type ConnectionConfig struct {
 //		PrivateKey wgtypes.Key
 //		Peers      []wgtypes.PeerConfig
 //	}
-
-func Connect(connection ConnectionConfig) {
+func ConnectApi(connection ConnectionConfig) error {
 	// ensureRoot()
 
 	if connection.URL != "" && connection.Token != "" {
-		SaveServerConfig(connection.URL, connection.Token)
+		if err := SaveServerConfig(connection.URL, connection.Token); err != nil {
+			return err
+		}
 	}
 
 	if connection.SetDaemon {
@@ -58,22 +59,36 @@ func Connect(connection ConnectionConfig) {
 		log.Printf("Connecting %s %s...\n", nodeType, node.Name)
 
 		// Using wireguard service
-		manualWindowsConnect()
+		if err := manualWindowsConnect(); err != nil {
+			return err
+		}
 		// log.Println("Waiting for connection starts (5 secs max)")
 
 		//5 secs max
+		tunnelExists := false
 		for i := 0; i < 10; i++ {
 			time.Sleep(500 * time.Millisecond)
 			if WireguardInterfaceExists() {
+				tunnelExists = true
 				break
 			}
 		}
-
+		if !tunnelExists {
+			return fmt.Errorf("wireguard interface not detected")
+		}
 		// if ExistWireguardConfigFile() {
 		// 	_ = os.Remove(wireguardConfigFolder + configFilename)
 		// }
+		return nil
 	} else {
-		log.Println("Error: Unable to connect we can't communicate with wiredoor server to get node configuration")
+		return fmt.Errorf("unable to connect we can't communicate with wiredoor server to get node configuration")
+	}
+}
+
+func Connect(connection ConnectionConfig) {
+	if err := ConnectApi(connection); err != nil {
+		fmt.Printf("Connection error: %v", err)
+		os.Exit(1)
 	}
 }
 
@@ -116,32 +131,33 @@ func ensureRoot() {
 	// }
 }
 
-func manualWindowsConnect() {
+func manualWindowsConnect() error {
 	config := GetNodeConfig()
 	err := os.WriteFile(wireguardConfigFolder+configFilename, []byte(config), 0600)
 	if err != nil {
-		log.Printf("error on write cfg,%v", err)
-		return
+		return fmt.Errorf("error on write cfg,%v", err)
 	}
 	//wireguard /installtunnelservice full_file_path
 	up := exec.Command("wireguard", "/installtunnelservice", wireguardConfigFolder+configFilename)
 
 	if err := up.Run(); err != nil {
-		log.Fatal("Error: Unable to connect to tunnel")
+		return fmt.Errorf("unable to connect to tunnel")
 	}
 
 	//iniciar servicio
 	//sc start WireGuardTunnel$wg0
-	//!TODO Move to native service api
-	start := exec.Command("sc", "start", "WireGuardTunnel$"+utils.TunnelName)
-	if err := start.Run(); err != nil {
-		errorStr := err.Error()
-		if strings.Contains(errorStr, "1056") {
-			log.Printf("Tunnel service is running\n")
-		} else {
-			log.Printf("WARNING: Unable to start tunnel service sunner, %s\n", errorStr)
-		}
+	if err := utils.StartService("WireGuardTunnel$" + utils.TunnelName); err != nil {
+		return fmt.Errorf("unable to start tunnel service sunner, %v", err)
 	}
+	// start := exec.Command("sc", "start", "WireGuardTunnel$"+utils.TunnelName)
+	// if err := start.Run(); err != nil {
+	// 	errorStr := err.Error()
+	// 	if strings.Contains(errorStr, "1056") {
+	// 		log.Printf("Tunnel service is running\n")
+	// 	} else {
+	// 		return fmt.Errorf("WARNING: Unable to start tunnel service sunner, %s\n", errorStr)
+	// 	}
+	// }
 	amIservice, err := svc.IsWindowsService()
 	if err != nil {
 		amIservice = false
@@ -152,6 +168,7 @@ func manualWindowsConnect() {
 			utils.StartService(utils.WiredoorServiceName)
 		}
 	}
+	return nil
 }
 
 func manualWindowsRestart() {
@@ -169,7 +186,7 @@ func manualWindowsRestart() {
 
 func manualWindowsDisconnect() {
 
-	log.Println("Disconecting...")
+	// log.Println("Disconecting...")
 
 	exists, err := utils.ServiceExists("WireGuardTunnel$" + utils.TunnelName)
 	if err != nil {
@@ -190,16 +207,16 @@ func manualWindowsDisconnect() {
 		}
 	}
 
-	amIservice, err := svc.IsWindowsService()
-	if err != nil {
-		amIservice = false
-	}
-	if IsDaemonEnabled() { //not used
-		if !amIservice {
-			utils.StopService(utils.WiredoorServiceName)
-			utils.DisableService(utils.WiredoorServiceName)
-		}
-	}
+	// amIservice, err := svc.IsWindowsService()
+	// if err != nil {
+	// 	amIservice = false
+	// }
+	// if IsDaemonEnabled() { //not used
+	// 	if !amIservice {
+	// 		utils.StopService(utils.WiredoorServiceName)
+	// 		utils.DisableService(utils.WiredoorServiceName)
+	// 	}
+	// }
 
 	if ExistWireguardConfigFile() {
 		_ = os.Remove(wireguardConfigFolder + configFilename)
