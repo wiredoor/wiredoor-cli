@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/wiredoor/wiredoor-cli/utils"
@@ -132,7 +133,10 @@ func ExistWireguardConfigFile() bool {
 }
 
 func getInterfaceName() (string, error) {
-	out, err := exec.Command("wg", "show", "all", "dump").Output()
+	if runtime.GOOS == "linux" {
+		return utils.TunnelName, nil
+	}
+	out, err := exec.Command("sudo", "wg", "show", "all", "dump").Output()
 	if err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
 			return "", fmt.Errorf("wg show all dump failed: %s", strings.TrimSpace(string(ee.Stderr)))
