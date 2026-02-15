@@ -8,3 +8,4 @@ etc/wiredoor/config.ini
 *.pkg
 *.exe
 *.syso
+.DS_store
