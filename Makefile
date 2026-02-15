@@ -94,9 +94,6 @@ build-windows:
 			.; \
 		cp $(BIN_PATH)/$(PKG_NAME)-windows-$(arch).exe $(OUT_PATH)/$(PKG_NAME)_$(VERSION)_windows_$(arch).exe; )
 
-# mkdir -p $(MACOS_TMP)/completions $(MACOS_TMP)/man;
-# cp -r $(COMPLETIONS_DIR)/* $(MACOS_TMP)/completions/ 2>/dev/null || true;
-# cp -r $(MAN_DIR)/* $(MACOS_TMP)/man/ 2>/dev/null || true;
 build-macos:
 	@mkdir -p "$(BIN_PATH)" "$(OUT_PATH)"
 	@$(foreach arch,$(ARCHS), \
@@ -107,16 +104,14 @@ build-macos:
 			.; \
 		echo "Packaging macOS tar.gz for $(arch)..."; \
 		rm -rf "$(MACOS_TMP)"; \
-		mkdir -p "$(MACOS_TMP)"; \
+		mkdir -p "$(MACOS_TMP)/completions" "$(MACOS_TMP)/man"; \
 		cp "$(BIN_PATH)/$(PKG_NAME)-darwin-$(arch)" "$(MACOS_TMP)/$(PKG_NAME)"; \
 		chmod +x "$(MACOS_TMP)/$(PKG_NAME)"; \
-		mkdir -p $(MACOS_TMP)/completions $(MACOS_TMP)/man \
-		cp -r $(COMPLETIONS_DIR)/* $(MACOS_TMP)/completions/ 2>/dev/null || true; \
-		cp -r $(MAN_DIR)/* $(MACOS_TMP)/man/ 2>/dev/null || true; \
+		cp -R "$(COMPLETIONS_DIR)/." "$(MACOS_TMP)/completions/"; \
+		cp -R "$(MAN_GZ_DIR)/." "$(MACOS_TMP)/man/"; \
 		( cd "$(MACOS_TMP)" && tar -czf "$(abspath $(OUT_PATH))/$(PKG_NAME)_$(VERSION)_darwin_$(arch).tar.gz" . ); \
 		echo "$(PKG_NAME)_$(VERSION)_darwin_$(arch).tar.gz"; \
 		shasum -a 256 "$(OUT_PATH)/$(PKG_NAME)_$(VERSION)_darwin_$(arch).tar.gz"; \
-		rm -rf "$(MACOS_TMP)"; \
 	)
 
 clean:
