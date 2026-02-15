@@ -3,7 +3,7 @@
 --after-install pkg/postinstall.sh
 --before-remove pkg/preuninstall.sh
 --config-files /etc/wiredoor/config.ini
---license "MIT"
+--license "Apache-2.0"
 --url "https://www.wiredoor.net"
 --maintainer "Daniel Mesa <dmesa@wiredoor.net>"
 --vendor "Wiredoor"
