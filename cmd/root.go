@@ -54,3 +54,7 @@ func init() {
 	rootCmd.Root().CompletionOptions.DisableDefaultCmd = true
 	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "Show Wiredoor CLI version")
 }
+
+func RootCmd() *cobra.Command {
+	return rootCmd
+}
