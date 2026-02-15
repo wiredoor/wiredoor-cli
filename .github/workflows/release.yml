@@ -50,6 +50,7 @@ jobs:
             dist/*.apk
             dist/*.pkg.tar.zst
             dist/*.exe
+            dist/*.tar.gz
 
   build-image:
     name: Build Gateway Image
