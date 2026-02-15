@@ -4,10 +4,14 @@
 package wiredoor
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/wiredoor/wiredoor-cli/utils"
 )
@@ -127,23 +131,40 @@ func ExistWireguardConfigFile() bool {
 	return err == nil
 }
 
-func interfaceExists() bool {
-	//
-	cmd := exec.Command("ip", "link", "show", utils.TunnelName)
-	return cmd.Run() == nil
-	// !! TODO test using go api
-	/*
-		if interfaces, err := net.Interfaces(); err == nil {
-			for i := 0; i < len(interfaces); i++ {
-				if interfaces[i].Name == utils.TunnelName {
-					return true
-				}
-			}
-			return false
-		} else {
-			log.Printf("error on list interface names: %v", err)
-			return false
+func getInterfaceName() (string, error) {
+	out, err := exec.Command("wg", "show", "all", "dump").Output()
+	if err != nil {
+		if ee, ok := err.(*exec.ExitError); ok {
+			return "", fmt.Errorf("wg show all dump failed: %s", strings.TrimSpace(string(ee.Stderr)))
 		}
-	*/
+		return "", fmt.Errorf("wg show all dump exec: %w", err)
+	}
 
+	sc := bufio.NewScanner(bytes.NewReader(out))
+	for sc.Scan() {
+		line := strings.TrimSpace(sc.Text())
+		if line == "" {
+			continue
+		}
+		fields := strings.Split(line, "\t")
+		if len(fields) == 0 || strings.TrimSpace(fields[0]) == "" {
+			return "", fmt.Errorf("wg dump: first line has no interface name")
+		}
+		return strings.TrimSpace(fields[0]), nil
+	}
+	if err := sc.Err(); err != nil {
+		return "", fmt.Errorf("scan wg dump: %w", err)
+	}
+	return "", fmt.Errorf("wg dump: no lines found")
+}
+
+func interfaceExists() bool {
+	iface, err := getInterfaceName()
+
+	if err != nil || iface == "" {
+		return false
+	}
+
+	_, netErr := net.InterfaceByName(iface)
+	return netErr == nil
 }
