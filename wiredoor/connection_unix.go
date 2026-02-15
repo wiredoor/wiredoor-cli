@@ -13,6 +13,7 @@ import (
 )
 
 var configFilename = utils.TunnelName + ".conf"
+var wireguardPath = "/etc/wireguard/"
 
 type ConnectionConfig struct {
 	URL       string
@@ -74,8 +75,13 @@ func ensureRoot() {
 }
 
 func manualLinuxConnect() {
+	if err := os.MkdirAll(wireguardPath, 0o700); err != nil {
+		log.Fatalf(err.Error())
+	}
+
 	config := GetNodeConfig()
-	err := os.WriteFile("/etc/wireguard/"+configFilename, []byte(config), 0600)
+
+	err := os.WriteFile(wireguardPath+configFilename, []byte(config), 0600)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -111,12 +117,12 @@ func manualLinuxDisconnect() {
 		if err := down.Run(); err != nil {
 			log.Printf("Error: Unable to disconnect: %v", err)
 		}
-		_ = os.Remove("/etc/wireguard/" + configFilename)
+		_ = os.Remove(wireguardPath + configFilename)
 	}
 }
 
 func ExistWireguardConfigFile() bool {
-	_, err := os.Stat("/etc/wireguard/" + configFilename)
+	_, err := os.Stat(wireguardPath + configFilename)
 
 	return err == nil
 }
