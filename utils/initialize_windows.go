@@ -30,7 +30,16 @@ func verifyFolders() error {
 
 // create a log file for clent app or for service
 func setLogFileNameAndLocation() error {
-	logFileName := os.Getenv("PROGRAMDATA") + "\\wiredoor\\WiredoorLastServiceLog.txt"
+	isSvc, err := svc.IsWindowsService()
+	if err != nil {
+		isSvc = false
+	}
+	var logFileName string
+	if isSvc {
+		logFileName = os.Getenv("PROGRAMDATA") + "\\wiredoor\\WiredoorLastServiceLog.txt"
+	} else {
+		logFileName = os.Getenv("PROGRAMDATA") + "\\wiredoor\\WiredoorLastRunLog.txt"
+	}
 	logFile, err := os.Create(logFileName)
 	if err == nil {
 		// defer logFile.Close()
