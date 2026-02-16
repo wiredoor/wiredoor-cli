@@ -82,7 +82,7 @@ func ensureRoot() {
 
 func manualLinuxConnect() {
 	if err := os.MkdirAll(wireguardPath, 0o700); err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err)
 	}
 
 	config := GetNodeConfig()
@@ -106,6 +106,10 @@ func manualLinuxConnect() {
 	iface, err := getInterfaceName()
 	if err != nil || iface == "" {
 		log.Fatal("Error: Unable to determine the interface name after connecting")
+	}
+
+	if err := os.MkdirAll("/var/run/wiredoor", 0o644); err != nil {
+		log.Fatal(err)
 	}
 
 	err = os.WriteFile(interfaceNameFile, []byte(iface), 0644)
