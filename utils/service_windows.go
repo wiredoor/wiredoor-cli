@@ -83,6 +83,7 @@ func ServiceRunning(serviceName string) (bool, error) {
 	if serviceList, err := serviceManagerConnection.ListServices(); err == nil {
 		if slices.Contains(serviceList, serviceName) {
 			if serviceX, err := openServiceLowPriv(serviceManagerConnection, serviceName); err == nil {
+				defer serviceX.Close()
 				if status, err := serviceX.Query(); err == nil {
 					return status.State == svc.Running, nil
 				} else {

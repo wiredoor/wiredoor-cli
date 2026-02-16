@@ -62,9 +62,9 @@ func ConnectApi(connection ConnectionConfig) error {
 		if err := manualWindowsConnect(); err != nil {
 			return err
 		}
-		// log.Println("Waiting for connection starts (5 secs max)")
+		log.Println("Waiting for connection (5 secs max)")
 
-		//5 secs max
+		// 5 secs max
 		tunnelExists := false
 		for i := 0; i < 10; i++ {
 			time.Sleep(500 * time.Millisecond)
@@ -88,6 +88,16 @@ func ConnectApi(connection ConnectionConfig) error {
 func Connect(connection ConnectionConfig) {
 	if err := ConnectApi(connection); err != nil {
 		fmt.Printf("Connection error: %v", err)
+		//!!!! DO NOT KILL SERVICE
+		//===================================
+		isSvc, err := svc.IsWindowsService()
+		if err != nil {
+			return
+		}
+		if isSvc {
+			return
+		}
+		//====================================
 		os.Exit(1)
 	}
 }
@@ -133,7 +143,28 @@ func ensureRoot() {
 
 func manualWindowsConnect() error {
 	config := GetNodeConfig()
-	err := os.WriteFile(wireguardConfigFolder+configFilename, []byte(config), 0600)
+
+	//cleanup
+	exists, err := utils.ServiceExists("WireGuardTunnel$" + utils.TunnelName)
+	if err != nil {
+		log.Printf("Warning, unable to determine if tunnel service exists, assuming true : %v", err)
+		exists = true
+	}
+	if exists {
+		//sc stop WireGuardTunnel$wg0
+		stop := exec.Command("sc", "stop", "WireGuardTunnel$"+utils.TunnelName)
+		if err := stop.Run(); err != nil {
+			log.Printf("Warnig: Unable to stop tunnel service: %v \n", err)
+		}
+
+		//wireguard /uninstalltunnelservice wg0
+		down := exec.Command("wireguard", "/uninstalltunnelservice", utils.TunnelName)
+		if err := down.Run(); err != nil {
+			log.Printf("Error: Unable to disconnect wireguard tunnel: %v", err)
+		}
+	}
+
+	err = os.WriteFile(wireguardConfigFolder+configFilename, []byte(config), 0600)
 	if err != nil {
 		return fmt.Errorf("error on write cfg,%v", err)
 	}
@@ -143,21 +174,20 @@ func manualWindowsConnect() error {
 	if err := up.Run(); err != nil {
 		return fmt.Errorf("unable to connect to tunnel")
 	}
-
-	//iniciar servicio
-	//sc start WireGuardTunnel$wg0
-	if err := utils.StartService("WireGuardTunnel$" + utils.TunnelName); err != nil {
-		return fmt.Errorf("unable to start tunnel service sunner, %v", err)
-	}
-	// start := exec.Command("sc", "start", "WireGuardTunnel$"+utils.TunnelName)
-	// if err := start.Run(); err != nil {
-	// 	errorStr := err.Error()
-	// 	if strings.Contains(errorStr, "1056") {
-	// 		log.Printf("Tunnel service is running\n")
-	// 	} else {
-	// 		return fmt.Errorf("WARNING: Unable to start tunnel service sunner, %s\n", errorStr)
-	// 	}
-	// }
+	/*
+		time.Sleep(250 * time.Millisecond)
+		//iniciar servicio
+		running, err := utils.ServiceRunning("WireGuardTunnel$" + utils.TunnelName)
+		if err != nil {
+			running = false
+		}
+		if !running {
+			//sc start WireGuardTunnel$wg0
+			if err := utils.StartService("WireGuardTunnel$" + utils.TunnelName); err != nil {
+				return fmt.Errorf("unable to start tunnel service sunner, %v", err)
+			}
+		}
+	*/
 	amIservice, err := svc.IsWindowsService()
 	if err != nil {
 		amIservice = false

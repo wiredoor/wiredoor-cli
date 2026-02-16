@@ -110,6 +110,7 @@ func manualLinuxRestart() {
 	}
 }
 
+// !TODO Integrate MAC OS
 func manualLinuxDisconnect() {
 	if ExistWireguardConfigFile() {
 		log.Println("Disconecting...")

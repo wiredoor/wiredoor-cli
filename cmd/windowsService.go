@@ -195,6 +195,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 	//prevent kill when monitoring
 	var monitoringMutex sync.Mutex
 	go func() {
+		log.Println("Monitoring routine")
 		for {
 			//wait 10 seconds before new check
 			time.Sleep(time.Duration(sleepSeconds) * time.Second)
@@ -288,7 +289,10 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 				if err == nil {
 					//parse
 					data := buff[:numBytes]
+					//connection sync
+					monitoringMutex.Lock()
 					manageIncomingData(data, wiredoorPipeHandle)
+					monitoringMutex.Unlock()
 
 				} else {
 					log.Printf("error reading pipe: %v", err)

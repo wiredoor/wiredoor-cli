@@ -99,7 +99,7 @@ Typical usage:
 				os.Exit(1)
 			}
 		} else {
-			fmt.Printf("Service comunication error: %v", err)
+			fmt.Printf("Service comunication error: %v\n", err)
 			log.Printf("Service comunication error: %v", err)
 			os.Exit(1)
 		}

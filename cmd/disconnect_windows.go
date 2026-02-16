@@ -65,21 +65,22 @@ Examples:
 						wiredoor.Status()
 						os.Exit(0)
 					default:
-						fmt.Printf("Fail due to unhandled service reposnse: %v", response)
+						fmt.Printf("Fail due to unhandled service reposnse: %v\n", response)
 						log.Printf("unhandled service reposnse: %v", response)
 						os.Exit(1)
 					}
 				} else {
-					fmt.Printf("Fail due to service reposnse format: %v", string(resp))
+					fmt.Printf("Fail due to service reposnse format: %v\n", string(resp))
 					log.Printf("response format error: %v", resp)
 					os.Exit(1)
 				}
 			} else {
-				fmt.Printf("Fail due to service reposnse format: %v", string(resp))
+				fmt.Printf("Fail due to service reposnse format: %v\n", string(resp))
 				log.Printf("response format error: %v", resp)
 				os.Exit(1)
 			}
 		} else {
+			fmt.Printf("Service comunication error: %v\n", err)
 			log.Printf("Service comunication error: %v", err)
 			os.Exit(1)
 		}
