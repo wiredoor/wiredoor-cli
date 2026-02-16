@@ -1,6 +1,6 @@
 module github.com/wiredoor/wiredoor-cli
 
-go 1.23.2
+go 1.25
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
