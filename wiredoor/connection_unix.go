@@ -19,6 +19,7 @@ import (
 
 var configFilename = utils.TunnelName + ".conf"
 var wireguardPath = "/etc/wireguard/"
+var interfaceNameFile = "/var/run/wiredoor/" + utils.TunnelName + "-interface"
 
 type ConnectionConfig struct {
 	URL       string
@@ -106,7 +107,7 @@ func manualLinuxConnect() {
 		log.Fatal("Error: Unable to determine the interface name after connecting")
 	}
 
-	err = os.WriteFile("/var/run/wiredoor/"+utils.TunnelName+"-interface", []byte(iface), 0644)
+	err = os.WriteFile(interfaceNameFile, []byte(iface), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -133,6 +134,7 @@ func manualLinuxDisconnect() {
 			log.Printf("Error: Unable to disconnect: %v", err)
 		}
 		_ = os.Remove(wireguardPath + configFilename)
+		_ = os.Remove(interfaceNameFile)
 	}
 }
 
