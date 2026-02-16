@@ -100,6 +100,16 @@ func manualLinuxConnect() {
 	if err := up.Run(); err != nil {
 		log.Fatal("Error: Unable to connect to tunnel, please review your user permissions or if you are inside container ensure that you have added the capability NET_ADMIN")
 	}
+
+	iface, err := getInterfaceName()
+	if err != nil || iface == "" {
+		log.Fatal("Error: Unable to determine the interface name after connecting")
+	}
+
+	err = os.WriteFile("/var/run/wiredoor/"+utils.TunnelName+"-interface", []byte(iface), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func manualLinuxRestart() {
@@ -163,12 +173,16 @@ func getInterfaceName() (string, error) {
 }
 
 func interfaceExists() bool {
-	iface, err := getInterfaceName()
-
-	if err != nil || iface == "" {
+	iface, err := os.ReadFile("/var/run/wiredoor/"+utils.TunnelName+"-interface")
+	if err != nil || len(iface) == 0 {
 		return false
 	}
 
-	_, netErr := net.InterfaceByName(iface)
+	ifaceName := strings.TrimSpace(string(iface))
+	if ifaceName == "" {
+		return false
+	}
+
+	_, netErr := net.InterfaceByName(ifaceName)
 	return netErr == nil
 }
