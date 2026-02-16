@@ -1,6 +1,6 @@
 {
   "name": "Wiredoor-CLI-Dev-Container",
-  "image": "golang:1.23-bookworm",
+  "image": "golang:1.25-bookworm",
   "overrideCommand": true,
   "workspaceFolder": "/workspace",
   "customizations": {
