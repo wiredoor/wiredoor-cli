@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -15,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/version"
 )
 
@@ -247,7 +247,7 @@ func GetNode() NodeInfo {
 		err := json.Unmarshal(resp, &node)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			utils.Terminal().Errorf("Unable to retrieve node information: %v", err)
 		}
 
 		return node
@@ -266,7 +266,7 @@ func GetServices() []HttpService {
 		err := json.Unmarshal(resp, &services)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			utils.Terminal().Errorf("Unable to retrieve HTTP services: %v", err)
 		}
 
 		return services
@@ -285,7 +285,7 @@ func GetTcpServices() []TcpService {
 		err := json.Unmarshal(resp, &services)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			utils.Terminal().Errorf("Unable to retrieve TCP services: %v", err)
 		}
 
 		return services
@@ -313,7 +313,7 @@ func GetApiConfig() ApiConfig {
 		err := json.Unmarshal(resp, &config)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			utils.Terminal().Errorf("Unable to retrieve API configuration: %v", err)
 		}
 
 		return config
@@ -331,7 +331,7 @@ func GetNodeWGConfig() WGConfig {
 		err := json.Unmarshal(resp, &config)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			utils.Terminal().Errorf("Unable to retrieve WireGuard configuration: %v", err)
 		}
 
 		return config
@@ -349,7 +349,7 @@ func RegenerateKeys() error {
 		err := json.Unmarshal(resp, &node)
 
 		if err != nil {
-			log.Println(err.Error())
+			utils.Terminal().Errorf("Unable to regenerate keys: %v", err)
 		}
 
 		config := getConfig()
@@ -359,10 +359,11 @@ func RegenerateKeys() error {
 			Connect(ConnectionConfig{})
 		} else {
 			if err != nil {
-
-				return fmt.Errorf("error getting new keys. Warning node config error:%v", err)
+				utils.Terminal().Errorf("Unable to regenerate keys. Warning node config error:%v", err)
+				return err
 			}
-			return fmt.Errorf("error getting new keys.")
+			utils.Terminal().Errorf("Unable to regenerate keys. No token received.")
+			return errors.New("unable to regenerate keys. No token received")
 		}
 	}
 	return nil
@@ -379,10 +380,11 @@ func ExposeHTTP(service HttpServiceParams, node NodeInfo) {
 		err := json.Unmarshal(resp, &createdService)
 
 		if err != nil {
-			fmt.Printf("❌ Unable to expose HTTP service: %v\n", err)
+			utils.Terminal().Errorf("Unable to expose HTTP service: %v", err)
+			return
 		}
 
-		fmt.Println("New Service Available")
+		utils.Terminal().Section("New Service Available")
 
 		PrintHttpServices([]HttpService{createdService}, node.IsGateway)
 	}
@@ -399,10 +401,11 @@ func ExposeTCP(service TcpServiceParams, node NodeInfo) {
 		err := json.Unmarshal(resp, &createdService)
 
 		if err != nil {
-			fmt.Printf("❌ Unable to expose TCP service: %v\n", err)
+			utils.Terminal().Errorf("Unable to expose TCP service: %v", err)
+			return
 		}
 
-		fmt.Println("New Service Available")
+		utils.Terminal().Section("New Service Available")
 
 		PrintTcpServices([]TcpService{createdService}, node.IsGateway)
 	}
@@ -418,10 +421,10 @@ func DisableServiceByType(serviceType string, id string) {
 			err := json.Unmarshal(resp, &service)
 
 			if err != nil {
-				fmt.Printf("❌ Unable to disable service: %v\n", err)
+				utils.Terminal().Errorf("Unable to disable service: %v", err)
 			}
 
-			fmt.Println("Service Disabled Successfully!")
+			utils.Terminal().Section("Service Disabled Successfully!")
 
 			PrintHttpServices([]HttpService{service}, service.BackendHost != "")
 		}
@@ -431,10 +434,10 @@ func DisableServiceByType(serviceType string, id string) {
 			err := json.Unmarshal(resp, &service)
 
 			if err != nil {
-				fmt.Printf("❌ Unable to disable service: %v\n", err)
+				utils.Terminal().Errorf("Unable to disable service: %v", err)
 			}
 
-			fmt.Println("Service Disabled Successfully!")
+			utils.Terminal().Section("Service Disabled Successfully!")
 
 			PrintTcpServices([]TcpService{service}, service.BackendHost != "")
 		}
@@ -457,10 +460,10 @@ func EnableServiceByType(params EnableRequest) {
 			err := json.Unmarshal(resp, &service)
 
 			if err != nil {
-				fmt.Printf("❌ Unable to enable service: %v\n", err)
+				utils.Terminal().Errorf("Unable to enable service: %v", err)
 			}
 
-			fmt.Println("Service Enabled Successfully!")
+			utils.Terminal().Section("Service Enabled Successfully!")
 
 			PrintHttpServices([]HttpService{service}, service.BackendHost != "")
 		}
@@ -470,10 +473,10 @@ func EnableServiceByType(params EnableRequest) {
 			err := json.Unmarshal(resp, &service)
 
 			if err != nil {
-				fmt.Printf("❌ Unable to disabled service: %v\n", err)
+				utils.Terminal().Errorf("Unable to enable service: %v", err)
 			}
 
-			fmt.Println("Service Enabled Successfully!")
+			utils.Terminal().Section("Service Enabled Successfully!")
 
 			PrintTcpServices([]TcpService{service}, service.BackendHost != "")
 		}
@@ -491,42 +494,62 @@ func UpdateGatewaySubnet(network GatewayNetwork) {
 		err := json.Unmarshal(resp, &node)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			utils.Terminal().Errorf("Unable to update gateway subnet: %v", err)
 		}
 
-		fmt.Printf("✅ Subnet successfully updated to: %s\n", node.GatewayNetwork)
+		utils.Terminal().Section("Subnet successfully updated to: " + node.GatewayNetwork)
 	}
 }
 
-func PrintHttpServices(services []HttpService, IsGateway bool) {
-	for _, svc := range services {
-		var target = ""
-
-		var enabled = "✅"
-
-		if !svc.Enabled {
-			enabled = "❌"
-		}
-
-		if IsGateway {
-			target = svc.BackendProto + "://" + svc.BackendHost + ":" + strconv.Itoa(svc.BackendPort)
-		} else {
-			target = svc.BackendProto + "://localhost:" + strconv.Itoa(svc.BackendPort)
-		}
-
-		fmt.Printf("- %s %s %s [HTTP] → %s → %s\n",
-			strconv.Itoa(int(svc.ID)), enabled, svc.Name, svc.PublicAccess, target)
+func PrintHttpServices(services []HttpService, isGateway bool) {
+	utils.Terminal().Section("  HTTP:")
+	if len(services) == 0 {
+		utils.Terminal().KV("HTTP", "none")
+		return
 	}
+
+	rows := make([][]string, 0, len(services))
+	for _, svc := range services {
+		enabled := "disabled"
+		if svc.Enabled {
+			enabled = "enabled"
+		}
+
+		target := buildHttpTarget(svc, isGateway)
+
+		rows = append(rows, []string{
+			strconv.FormatInt(int64(svc.ID), 10),
+			enabled,
+			svc.Name,
+			svc.PublicAccess,
+			target,
+		})
+	}
+
+	utils.Terminal().Table([]string{"ID", "STATE", "NAME", "PUBLIC", "TARGET"}, rows)
 }
 
-func PrintTcpServices(services []TcpService, IsGateway bool) {
+func buildHttpTarget(svc HttpService, isGateway bool) string {
+	port := strconv.Itoa(svc.BackendPort)
+	if isGateway {
+		return svc.BackendProto + "://" + svc.BackendHost + ":" + port
+	}
+	return svc.BackendProto + "://localhost:" + port
+}
+
+func PrintTcpServices(services []TcpService, isGateway bool) {
+	utils.Terminal().Section("  TCP:")
+
+	if len(services) == 0 {
+		utils.Terminal().KV("TCP", "none")
+		return
+	}
+
+	rows := make([][]string, 0, len(services))
 	for _, svc := range services {
-		var target = ""
-
-		var enabled = "✅"
-
-		if !svc.Enabled {
-			enabled = "❌"
+		state := "disabled"
+		if svc.Enabled {
+			state = "enabled"
 		}
 
 		proto := strings.ToUpper(svc.Proto)
@@ -534,15 +557,27 @@ func PrintTcpServices(services []TcpService, IsGateway bool) {
 			proto += "/SSL"
 		}
 
-		if IsGateway {
-			target = svc.Proto + "://" + svc.BackendHost + ":" + strconv.Itoa(svc.BackendPort)
-		} else {
-			target = svc.Proto + "://localhost:" + strconv.Itoa(svc.BackendPort)
-		}
+		target := buildTcpTarget(svc, isGateway)
 
-		fmt.Printf("- %s %s %s [%s] → %s → %s\n",
-			strconv.Itoa(int(svc.ID)), enabled, svc.Name, proto, svc.PublicAccess, target)
+		rows = append(rows, []string{
+			strconv.FormatInt(int64(svc.ID), 10),
+			state,
+			svc.Name,
+			proto,
+			svc.PublicAccess,
+			target,
+		})
 	}
+
+	utils.Terminal().Table([]string{"ID", "STATE", "NAME", "PROTO", "PUBLIC", "TARGET"}, rows)
+}
+
+func buildTcpTarget(svc TcpService, isGateway bool) string {
+	port := strconv.Itoa(svc.BackendPort)
+	if isGateway {
+		return svc.Proto + "://" + svc.BackendHost + ":" + port
+	}
+	return svc.Proto + "://localhost:" + port
 }
 
 func requestApi(request apiRequest) []byte {
@@ -576,7 +611,7 @@ func requestApi(request apiRequest) []byte {
 	req, err := http.NewRequest(request.Method, base.String(), bytes.NewBuffer(request.Body))
 
 	if err != nil {
-		fmt.Printf("❌ Unable to perform request: %v\n", err)
+		utils.Terminal().Errorf("Unable to perform request: %v", err)
 	}
 
 	var token string
@@ -598,7 +633,7 @@ func requestApi(request apiRequest) []byte {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		fmt.Printf("❌ Request failed: %v\n", err)
+		utils.Terminal().Errorf("Request failed: %v", err)
 		return nil
 	}
 
@@ -610,12 +645,17 @@ func requestApi(request apiRequest) []byte {
 
 		_ = json.Unmarshal(bodyBytes, &errorRes)
 
-		fmt.Println("Bad Request: ", errorRes.Message)
+		utils.Terminal().Errorf("Bad Request: %s", errorRes.Message)
 		return nil
 	}
 
 	if resp.StatusCode == 403 || resp.StatusCode == 401 {
-		fmt.Println("Error: Invalid authentication token")
+		utils.Terminal().Errorf("Invalid authentication token")
+		return nil
+	}
+
+	if resp.StatusCode == 404 {
+		utils.Terminal().Errorf("Server not found. Please check your server URL configuration.")
 		return nil
 	}
 
@@ -626,7 +666,7 @@ func requestApi(request apiRequest) []byte {
 
 		if len(errorRes.Errors.Body) > 0 {
 			for _, v := range errorRes.Errors.Body {
-				fmt.Println("Error - "+v.Field+":", v.Message)
+				utils.Terminal().Errorf(" -> %s: %s", v.Field, v.Message)
 			}
 		}
 
@@ -634,11 +674,17 @@ func requestApi(request apiRequest) []byte {
 	}
 
 	if resp.StatusCode >= 500 {
-		fmt.Println("Error: Unknown Wiredoor server error")
+		utils.Terminal().Errorf("Unknown Wiredoor server error")
 		return nil
 	}
+
+	if !strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "application/json") {
+		utils.Terminal().Errorf("Unexpected response format: %s", resp.Header.Get("Content-Type"))
+		return nil
+	}
+
 	if err != nil {
-		fmt.Printf("❌ Unable to read body response: %v\n", err)
+		utils.Terminal().Errorf("Unable to read body response: %v", err)
 	}
 
 	return bodyBytes
