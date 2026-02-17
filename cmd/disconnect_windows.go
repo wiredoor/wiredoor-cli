@@ -15,7 +15,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/wiredoor/wiredoor-cli/utils"
-	"github.com/wiredoor/wiredoor-cli/wiredoor"
 	"golang.org/x/sys/windows/svc"
 )
 
@@ -62,26 +61,26 @@ Examples:
 				if response, ok := jsonResponse["response"].(string); ok {
 					switch response {
 					case "ok":
-						wiredoor.Status()
+						fmt.Printf("Disconnected successfully.\n")
 						os.Exit(0)
 					default:
-						fmt.Printf("Fail due to unhandled service reposnse: %v\n", response)
-						log.Printf("unhandled service reposnse: %v", response)
+						fmt.Printf("Fail due to unhandled service response: %v\n", response)
+						log.Printf("unhandled service response: %v", response)
 						os.Exit(1)
 					}
 				} else {
-					fmt.Printf("Fail due to service reposnse format: %v\n", string(resp))
+					fmt.Printf("Fail due to service response format: %v\n", string(resp))
 					log.Printf("response format error: %v", resp)
 					os.Exit(1)
 				}
 			} else {
-				fmt.Printf("Fail due to service reposnse format: %v\n", string(resp))
+				fmt.Printf("Fail due to service response format: %v\n", string(resp))
 				log.Printf("response format error: %v", resp)
 				os.Exit(1)
 			}
 		} else {
-			fmt.Printf("Service comunication error: %v\n", err)
-			log.Printf("Service comunication error: %v", err)
+			fmt.Printf("Service communication error: %v\n", err)
+			log.Printf("Service communication error: %v", err)
 			os.Exit(1)
 		}
 	},

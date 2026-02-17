@@ -205,12 +205,12 @@ func manualWindowsRestart() {
 	//sc stop WireGuardTunnel$wg0
 	stop := exec.Command("sc", "stop", "WireGuardTunnel$"+utils.TunnelName)
 	if err := stop.Run(); err != nil {
-		log.Println("Warinig: Unable to stop tunnel service")
+		log.Println("Warning:  Unable to stop tunnel service")
 	}
 	//sc start WireGuardTunnel$wg0
 	start := exec.Command("sc", "start", "WireGuardTunnel$"+utils.TunnelName)
 	if err := start.Run(); err != nil {
-		log.Println("Warinig: Unable to start tunnel service")
+		log.Println("Warning:  Unable to start tunnel service")
 	}
 }
 
@@ -227,7 +227,7 @@ func manualWindowsDisconnect() {
 		//sc stop WireGuardTunnel$wg0
 		stop := exec.Command("sc", "stop", "WireGuardTunnel$"+utils.TunnelName)
 		if err := stop.Run(); err != nil {
-			log.Printf("Warnig: Unable to stop tunnel service: %v \n", err)
+			log.Printf("Warning: Unable to stop tunnel service: %v \n", err)
 		}
 
 		//wireguard /uninstalltunnelservice wg0

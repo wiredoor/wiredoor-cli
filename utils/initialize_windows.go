@@ -46,7 +46,7 @@ func setLogFileNameAndLocation() error {
 		log.SetOutput(logFile)
 	} else {
 		//never
-		log.Println("Warinig:Fail to create log file")
+		log.Println("Warning: Unable to create log file")
 	}
 	return nil
 }

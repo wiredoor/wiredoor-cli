@@ -122,8 +122,8 @@ func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
 								UseDaemon: true,
 								SetDaemon: false})
 						if err != nil {
-							log.Printf("connect error: %v", err)
-							sendResponse(fmt.Sprintf("connect error: %v", err), wiredoorPipeHandle)
+							log.Printf("[%s connect] %v", utils.WiredoorServiceName, err)
+							sendResponse(fmt.Sprintf("[%s connect] %v", utils.WiredoorServiceName, err), wiredoorPipeHandle)
 						} else {
 							sendResponse("ok", wiredoorPipeHandle)
 						}

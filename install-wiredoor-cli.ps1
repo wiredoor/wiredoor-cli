@@ -12,7 +12,7 @@ $Arch = if ([Environment]::Is64BitOperatingSystem) { 'amd64' } else { '386' }
 
 # Job artifacts base URL
 # $ReleaseBaseUrl = 'https://github.com/wiredoor/wiredoor-cli/releases/download/latest'
-$ReleaseBaseUrl = 'https://gitlab.infladoor.com/api/v4/projects/40/jobs/1696/artifacts/dist'
+$ReleaseBaseUrl = 'https://gitlab.infladoor.com/api/v4/projects/40/jobs/1699/artifacts/dist'
 
 $FileName = "wiredoor_${VERSION}_windows_${Arch}.exe"
 $DownloadUrl = "$ReleaseBaseUrl/$FileName"
