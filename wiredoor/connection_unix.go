@@ -7,7 +7,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -44,6 +43,9 @@ func Connect(connection ConnectionConfig) {
 		SaveDaemonConfig(connection.UseDaemon)
 	}
 
+	utils.Terminal().StartProgress("Connecting...")
+	defer utils.Terminal().StopProgress()
+
 	node := GetNode()
 
 	if node.ID > 0 {
@@ -53,14 +55,12 @@ func Connect(connection ConnectionConfig) {
 			nodeType = "gateway"
 		}
 
-		fmt.Printf("Connecting %s %s...\n", nodeType, node.Name)
+		utils.Terminal().UpdateProgress("Connecting " + nodeType + " " + node.Name)
 
 		// Using wg-quick
 		manualLinuxConnect()
 
 		Status()
-	} else {
-		fmt.Println("Error: Unable to connect we can't communicate with wiredoor server to get node configuration")
 	}
 }
 
@@ -75,21 +75,24 @@ func Disconnect() {
 
 func ensureRoot() {
 	if os.Geteuid() != 0 {
-		fmt.Fprintln(os.Stderr, "Permission denied: root privileges are required (try with sudo)")
+		utils.Terminal().Errorf("Permission denied: root privileges are required")
+		utils.Terminal().Hint("Try running with sudo or as root")
 		os.Exit(1)
 	}
 }
 
 func manualLinuxConnect() {
 	if err := os.MkdirAll(wireguardPath, 0o700); err != nil {
-		log.Fatal(err)
+		utils.Terminal().Errorf("Error creating WireGuard directory: %v", err)
+		os.Exit(1)
 	}
 
 	config := GetNodeConfig()
 
 	err := os.WriteFile(wireguardPath+configFilename, []byte(config), 0600)
 	if err != nil {
-		log.Fatal(err)
+		utils.Terminal().Errorf("Error writing WireGuard configuration file: %v", err)
+		os.Exit(1)
 	}
 	//take care of spaces
 	up := exec.Command("bash", "-c", "wg-quick up "+utils.TunnelName) // wg-quick down wg0 > /dev/null &2>1
@@ -100,35 +103,41 @@ func manualLinuxConnect() {
 	}
 
 	if err := up.Run(); err != nil {
-		log.Fatal("Error: Unable to connect to tunnel, please review your user permissions or if you are inside container ensure that you have added the capability NET_ADMIN")
+		utils.Terminal().Errorf("Unable to connect to tunnel, please review your user permissions or if you are inside container ensure that you have added the capability NET_ADMIN")
+		os.Exit(1)
 	}
 
 	iface, err := getInterfaceName()
 	if err != nil || iface == "" {
-		log.Fatal("Error: Unable to determine the interface name after connecting")
+		utils.Terminal().Errorf("Unable to determine the interface name after connecting")
+		os.Exit(1)
 	}
 
 	if err := os.MkdirAll("/var/run/wiredoor", 0o644); err != nil {
-		log.Fatal(err)
+		utils.Terminal().Errorf("Error creating Wiredoor runtime directory: %v", err)
+		os.Exit(1)
 	}
 
 	err = os.WriteFile(interfaceNameFile, []byte(iface), 0644)
 	if err != nil {
-		log.Fatal(err)
+		utils.Terminal().Errorf("Error writing Wiredoor interface file: %v", err)
+		os.Exit(1)
 	}
 }
 
 func manualLinuxRestart() {
 	restart := exec.Command("bash", "-c", "wg-quick down "+utils.TunnelName+" && wg-quick up "+utils.TunnelName) // wg-quick down wg0 > /dev/null &2>1
 	if err := restart.Run(); err != nil {
-		log.Fatal("Error: Unable to restart the tunnel, please review your user permissions or if you are inside container ensure that you have added the capability NET_ADMIN")
+		utils.Terminal().Errorf("Unable to restart the tunnel, please review your user permissions or if you are inside container ensure that you have added the capability NET_ADMIN")
+		os.Exit(1)
 	}
 }
 
 // !TODO Integrate MAC OS
 func manualLinuxDisconnect() {
 	if ExistWireguardConfigFile() {
-		log.Println("Disconecting...")
+		utils.Terminal().StartProgress("Disconnecting...")
+		defer utils.Terminal().StopProgress()
 		down := exec.Command("bash", "-c", "wg-quick down "+utils.TunnelName) // wg-quick down wg0 > /dev/null &2>1
 
 		if IsDaemonEnabled() {
@@ -137,10 +146,15 @@ func manualLinuxDisconnect() {
 		}
 
 		if err := down.Run(); err != nil {
-			log.Printf("Error: Unable to disconnect: %v", err)
+			utils.Terminal().Errorf("Unable to disconnect: %v", err)
 		}
+		utils.Terminal().FinalizeProgress()
+		utils.Terminal().Printf("Disconnected successfully.")
+
 		_ = os.Remove(wireguardPath + configFilename)
 		_ = os.Remove(interfaceNameFile)
+	} else {
+		utils.Terminal().Printf("No active WireGuard configuration found. Already disconnected.")
 	}
 }
 
@@ -181,7 +195,7 @@ func getInterfaceName() (string, error) {
 }
 
 func interfaceExists() bool {
-	iface, err := os.ReadFile("/var/run/wiredoor/"+utils.TunnelName+"-interface")
+	iface, err := os.ReadFile("/var/run/wiredoor/" + utils.TunnelName + "-interface")
 	if err != nil || len(iface) == 0 {
 		return false
 	}
