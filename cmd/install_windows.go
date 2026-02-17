@@ -18,21 +18,21 @@ import (
 )
 
 func installService() error {
-	fmt.Printf("Installing ...\n")
+	fmt.Printf("[wiredoor] Installing windows service...\n")
 	// user, password, err := utils.CreateServiceAccount(utils.WIredoorServiceUserName)
 	// if err != nil {
 	// 	log.Printf("error creating dedicated user for service, using systemwide default user:\n%v\n", err)
 	// }
 	running, err := utils.WiredoorServiceRunning()
 	if err != nil {
-		return fmt.Errorf("error when determine service status: %v", err)
+		return fmt.Errorf("determine service status: %v", err)
 	}
 	if running {
-		return fmt.Errorf("error: Wiredoor service is running, stop it first")
+		return fmt.Errorf("Wiredoor service is running; stop it first")
 	}
 	exists, err := utils.WiredoorServiceExists()
 	if err != nil {
-		return fmt.Errorf("error detecting old service: : %v", err)
+		return fmt.Errorf("error detecting old service: %v", err)
 	}
 	if exists {
 		err = utils.DeleteService(utils.WiredoorServiceName)
@@ -48,6 +48,7 @@ func installService() error {
 	// 	if err = utils.DeleteUser(user); err != nil {
 	// 		log.Printf("Warninig, error on cleanup TMP user : %v", err)
 	// 	}
+	fmt.Printf("[wiredoor] Starting service %s\n", utils.WiredoorServiceName)
 	err = utils.CreateServiceFromThisExecutable(utils.WiredoorServiceName, "", "")
 	if err != nil {
 		return fmt.Errorf("error instaling wiredoor service: %v", err)
@@ -57,6 +58,7 @@ func installService() error {
 	if err != nil {
 		return fmt.Errorf("error starting wiredoor service: %v", err)
 	}
+	fmt.Printf("[wiredoor] %s installed and started successfully.\n", utils.WiredoorServiceName)
 	return nil
 }
 
@@ -65,16 +67,15 @@ type wiredoorInstallerService struct{}
 func (wsvc *wiredoorInstallerService) Execute(args []string,
 	r <-chan svc.ChangeRequest,
 	s chan<- svc.Status) (bool, uint32) {
-	log.Println("Installer starting")
+	log.Println("Installer service starting")
 	s <- svc.Status{State: svc.StartPending}
 	s <- svc.Status{State: svc.Running}
 	err := installService()
 	if err != nil {
-		log.Printf("install error,%v", err)
-	} else {
-		log.Println("Installer ok")
+		log.Printf("Install error: %v", err)
+		return false, 1
 	}
-	log.Println("Installer end")
+	log.Println("Installer finished successfully")
 	s <- svc.Status{State: svc.StopPending}
 	return false, 0
 }
@@ -83,7 +84,7 @@ var installCmd = &cobra.Command{
 	Use:    "install",
 	Hidden: true,
 	Short:  "Install as service on Windows",
-	Long:   `internal use, for installer or installation repair.`,
+	Long:   `Internal use, for installer or installation repair.`,
 	Example: `
   # Install this executable as service for IPC
   wiredoor install`,
@@ -98,7 +99,7 @@ var installCmd = &cobra.Command{
 				defer logFile.Close()
 				log.SetOutput(logFile)
 			}
-			err = svc.Run("InstaladorSvc", &wiredoorInstallerService{})
+			err = svc.Run("InstallerSvc", &wiredoorInstallerService{})
 			if err != nil {
 				log.Print("Fail to start service mode\n")
 				os.Exit(1)
@@ -106,7 +107,7 @@ var installCmd = &cobra.Command{
 		} else {
 			// try install
 			if err := installService(); err != nil {
-				log.Fatal("installation error: ", err)
+				log.Fatalf("Installation error: %v", err)
 			}
 		}
 	},

@@ -4,6 +4,7 @@ BIN_PATH := bin
 PKG_NAME := wiredoor
 GO_MODULE := github.com/wiredoor/wiredoor-cli
 ARCHS := amd64 arm64
+WIN_ARCHS := amd64 arm64 386
 MACOS_TMP := $(OUT_PATH)/macos-tmp
 COMPLETIONS_DIR := completions
 MAN_DIR := man
@@ -86,7 +87,7 @@ build-pacman:
 
 build-windows:
 	@mkdir -p $(BIN_PATH)
-	@$(foreach arch,$(ARCHS), \
+	@$(foreach arch,$(WIN_ARCHS), \
 		echo "Building Windows for $(arch)..."; \
 		CGO_ENABLED=0 GOOS=windows GOARCH=$(arch) go build \
 			-ldflags "-X '$(GO_MODULE)/version.Version=$(VERSION)'" \
