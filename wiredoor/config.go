@@ -1,12 +1,12 @@
 package wiredoor
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"gopkg.in/ini.v1"
 )
 
@@ -63,7 +63,7 @@ func SaveServerConfig(server string, token string) error {
 	cfg, err := getIniFile()
 
 	if err != nil {
-		log.Printf("Unable to get configuration file: %v", err)
+		utils.Terminal().Errorf("Unable to get configuration file: %v", err)
 		return err
 	}
 
@@ -77,7 +77,7 @@ func SaveDaemonConfig(useDaemon bool) {
 	cfg, err := getIniFile()
 
 	if err != nil {
-		log.Fatalf("Unable to get configuration file: %v", err)
+		utils.Terminal().Errorf("Unable to get configuration file: %v", err)
 	}
 	cfg.Section("daemon").Key("enabled").SetValue(boolToString(useDaemon))
 
@@ -100,7 +100,7 @@ func getConfig() Config {
 	cfg, err := getIniFile()
 
 	if err != nil {
-		log.Fatalf("Unable to get configuration file: %v", err)
+		utils.Terminal().Errorf("Unable to get configuration file: %v", err)
 	}
 
 	return Config{

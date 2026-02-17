@@ -46,6 +46,8 @@ Typical usage:
 
 		if !wiredoor.WireguardInterfaceExists() {
 			wiredoor.Connect(wiredoor.ConnectionConfig{URL: url, Token: token, UseDaemon: useDaemon, SetDaemon: setDaemon})
+		} else {
+			wiredoor.Status()
 		}
 	},
 }
