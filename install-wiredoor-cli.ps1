@@ -12,7 +12,7 @@ $Arch = if ([Environment]::Is64BitOperatingSystem) { 'amd64' } else { '386' }
 
 # Job artifacts base URL
 # $ReleaseBaseUrl = 'https://github.com/wiredoor/wiredoor-cli/releases/download/latest'
-$ReleaseBaseUrl = 'https://gitlab.infladoor.com/api/v4/projects/40/jobs/1699/artifacts/dist'
+$ReleaseBaseUrl = 'https://gitlab.infladoor.com/api/v4/projects/40/jobs/1702/artifacts/dist'
 
 $FileName = "wiredoor_${VERSION}_windows_${Arch}.exe"
 $DownloadUrl = "$ReleaseBaseUrl/$FileName"
@@ -114,7 +114,21 @@ else {
 # -----------------------------
 # Check WireGuard
 # -----------------------------
-if (-not (Get-Command 'wireguard' -ErrorAction SilentlyContinue)) {
+function Test-WireGuardInstalled {
+    $keys = @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
+    )
+
+    foreach ($k in $keys) {
+        $app = Get-ItemProperty -Path $k -ErrorAction SilentlyContinue |
+            Where-Object { $_.DisplayName -eq 'WireGuard' } |
+            Select-Object -First 1
+        if ($app) { return $true }
+    }
+    return $false
+}
+if (-not (Test-WireGuardInstalled)) {
     $WgArch = if ($Arch -eq 'amd64') { 'amd64' } else { 'x86' }
     $WgDownloadUrl = "https://download.wireguard.com/windows-client/wireguard-$WgArch-$WgVERSION.msi"
     $WgInstallerPath = Join-Path $TempDir "wireguard-$WgArch-$WgVERSION.msi"
@@ -136,6 +150,8 @@ if (-not (Get-Command 'wireguard' -ErrorAction SilentlyContinue)) {
         Fail "WireGuard MSI failed with exit code $($proc.ExitCode)"
     }
     Get-Process -Name 'WireGuard' -ErrorAction SilentlyContinue | Stop-Process -Force
+    # Start-Sleep -Seconds 1
+    # Get-Process -Name 'WireGuard' -ErrorAction SilentlyContinue | Stop-Process -Force
 }
 
 # -----------------------------
