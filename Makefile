@@ -50,7 +50,7 @@ build-deb:
 			-p $(OUT_PATH)/$(PKG_NAME)_$(VERSION)-1_debian_$(arch).deb \
 			$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)=/usr/bin/$(PKG_NAME) \
 			usr=/usr \
-			etc/system/systemd/$(PKG_NAME).service=/lib/systemd/system/$(PKG_NAME).service;)
+			build/linux/etc/system/systemd/$(PKG_NAME).service=/lib/systemd/system/$(PKG_NAME).service;)
 
 build-rpm:
 	@$(foreach arch,$(ARCHS), \
@@ -61,7 +61,7 @@ build-rpm:
 			-p $(OUT_PATH)/$(PKG_NAME)_$(VERSION)-1_rpm_$(arch).rpm \
 			$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)=/usr/bin/$(PKG_NAME) \
 			usr=/usr \
-			etc/system/systemd/$(PKG_NAME).service=/usr/lib/systemd/system/$(PKG_NAME).service;)
+			build/linux/etc/system/systemd/$(PKG_NAME).service=/usr/lib/systemd/system/$(PKG_NAME).service;)
 
 build-apk:
 	@$(foreach arch,$(ARCHS), \
@@ -72,7 +72,7 @@ build-apk:
 			-p $(OUT_PATH)/$(PKG_NAME)_$(VERSION)-1_alpine_$(arch).apk \
 			$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)=/usr/bin/$(PKG_NAME) \
 			usr=/usr \
-			etc/init.d/$(PKG_NAME).init=/etc/init.d/$(PKG_NAME);)
+			build/linux/etc/init.d/$(PKG_NAME).init=/etc/init.d/$(PKG_NAME);)
 
 build-pacman:
 	@$(foreach arch,$(ARCHS), \
@@ -83,7 +83,7 @@ build-pacman:
 			-p $(OUT_PATH)/$(PKG_NAME)_$(VERSION)-1_archlinux_$(arch).pkg.tar.zst \
 			$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)=/usr/bin/$(PKG_NAME) \
 			usr=/usr \
-			etc/system/systemd/$(PKG_NAME).service=/usr/lib/systemd/system/$(PKG_NAME).service;)
+			build/linux/etc/system/systemd/$(PKG_NAME).service=/usr/lib/systemd/system/$(PKG_NAME).service;)
 
 build-windows:
 	@mkdir -p $(BIN_PATH)
