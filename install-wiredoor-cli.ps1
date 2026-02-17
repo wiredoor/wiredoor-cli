@@ -1,74 +1,91 @@
 #requires -Version 5.1
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
-$AppName    = "wiredoor-cli"
-$ExeName    = "wiredoor.exe"
-$ServiceName= "wiredoorService"
-$VERSION    = "1.0.0"
-$WgVERSION  = "0.5.3"
+$ExeName = 'wiredoor.exe'
+$ServiceName = 'wiredoorService'
+$VERSION = '1.0.0'
+$WgVERSION = '0.5.3'
 
-$InstallDir = Join-Path $env:LOCALAPPDATA "Wiredoor\bin"
-$TempDir    = Join-Path $env:TEMP "Wiredoor-Install"
-$Arch       = if ([Environment]::Is64BitOperatingSystem) { "amd64" } else { "386" }
+$InstallDir = Join-Path $env:LOCALAPPDATA 'Wiredoor\bin'
+$TempDir = Join-Path $env:TEMP 'Wiredoor-Install'
+$Arch = if ([Environment]::Is64BitOperatingSystem) { 'amd64' } else { '386' }
 
 # Job artifacts base URL
-# $ReleaseBaseUrl = "https://github.com/wiredoor/wiredoor-cli/releases/download/latest"
-$ReleaseBaseUrl = "https://gitlab.infladoor.com/api/v4/projects/40/jobs/1438/artifacts/dist"
+# $ReleaseBaseUrl = 'https://github.com/wiredoor/wiredoor-cli/releases/download/latest'
+$ReleaseBaseUrl = 'https://gitlab.infladoor.com/api/v4/projects/40/jobs/1696/artifacts/dist'
 
-$FileName    = "wiredoor_${VERSION}_windows_${Arch}.exe"
+$FileName = "wiredoor_${VERSION}_windows_${Arch}.exe"
 $DownloadUrl = "$ReleaseBaseUrl/$FileName"
 $GitLabToken = $env:GITLAB_TOKEN
 
 # -----------------------------
 # Helper functions
 # -----------------------------
-function Write-Info($msg) { Write-Host "[wiredoor] $msg" }
-function Fail($msg) { throw "[wiredoor] ERROR: $msg" }
-
-function Ensure-Dir($path) {
-  if (!(Test-Path $path)) { New-Item -ItemType Directory -Path $path | Out-Null }
+function Write-Info {
+    param([Parameter(Mandatory)][string]$Msg)
+    Write-Host "[wiredoor] $Msg"
 }
 
-function Add-ToUserPath($dir) {
-  $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-  if ($userPath -and ($userPath.Split(";") -contains $dir)) { return }
-  $newPath = if ([string]::IsNullOrEmpty($userPath)) { $dir } else { "$userPath;$dir" }
-  [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
-  $env:Path = "$env:Path;$dir"
+function Fail {
+    param([Parameter(Mandatory)][string]$Msg)
+    throw "[wiredoor] ERROR: $Msg"
 }
 
-function Test-Command($name) {
-  return $null -ne (Get-Command $name -ErrorAction SilentlyContinue)
+function New-DirectoryIfNotExists {
+    param([Parameter(Mandatory)][string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) {
+        New-Item -ItemType Directory -Path $Path | Out-Null
+    }
+}
+
+function Add-ToUserPath {
+    param([Parameter(Mandatory)][string]$Dir)
+
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    if ($userPath -and ($userPath.Split(';') -contains $Dir)) { return }
+
+    $newPath = if ([string]::IsNullOrEmpty($userPath)) { $Dir } else { "$userPath;$Dir" }
+    [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+    $env:Path = "$env:Path;$Dir"
+}
+
+function Test-Command {
+    param([Parameter(Mandatory)][string]$Name)
+    return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
 # -----------------------------
 # Preflight
 # -----------------------------
-Write-Info "📦 Installing Wiredoor CLI v$VERSION..."
+Write-Info "Installing Wiredoor CLI v$VERSION..."
 
-if (!(Test-Command "Invoke-WebRequest")) {
-  Fail "Invoke-WebRequest is not available."
+if (-not (Test-Command 'Invoke-WebRequest')) {
+    Fail 'Invoke-WebRequest is not available.'
+}
+
+if ([string]::IsNullOrWhiteSpace($GitLabToken)) {
+    Fail 'GITLAB_TOKEN is not set.'
 }
 
 # Recreate temp
-if (Test-Path $TempDir) { Remove-Item -Recurse -Force $TempDir -ErrorAction SilentlyContinue }
-Ensure-Dir $TempDir
-Ensure-Dir $InstallDir
+if (Test-Path -LiteralPath $TempDir) {
+    Remove-Item -Recurse -Force -LiteralPath $TempDir -ErrorAction SilentlyContinue
+}
+
+New-DirectoryIfNotExists $TempDir
+New-DirectoryIfNotExists $InstallDir
 
 # -----------------------------
 # Download
 # -----------------------------
 $OutPath = Join-Path $TempDir ([IO.Path]::GetFileName($DownloadUrl))
-Write-Info "Downloading: $DownloadUrl"
+Write-Info "Downloading: $DownloadUrl -> $OutPath"
 
-$headers = @{}
-$headers["PRIVATE-TOKEN"] = "glpat-7k6iWjehLe8pY_5MiyUU"
-Write-Info "Using headers: $($headers)"
-Write-Info "Downloading: $DownloadUrl to $OutPath"
+$headers = @{ 'PRIVATE-TOKEN' = $GitLabToken }
 Invoke-WebRequest -Uri $DownloadUrl -OutFile $OutPath -UseBasicParsing -Headers $headers
 
-if (!(Test-Path $OutPath)) {
-  Fail "Download failed (file not found): $OutPath"
+if (-not (Test-Path -LiteralPath $OutPath)) {
+    Fail "Download failed (file not found): $OutPath"
 }
 
 # -----------------------------
@@ -77,69 +94,74 @@ if (!(Test-Path $OutPath)) {
 $ext = [IO.Path]::GetExtension($OutPath).ToLowerInvariant()
 $ExeCandidatePath = $null
 
-if ($ext -eq ".zip") {
-  Write-Info "Extracting ZIP..."
-  Expand-Archive -Path $OutPath -DestinationPath $TempDir -Force
+if ($ext -eq '.zip') {
+    Write-Info 'Extracting ZIP...'
+    Expand-Archive -Path $OutPath -DestinationPath $TempDir -Force
 
-  $candidate = Get-ChildItem -Path $TempDir -Recurse -File -Filter $ExeName | Select-Object -First 1
-  if (!$candidate) { Fail "Could not find $ExeName inside the ZIP." }
-  $ExeCandidatePath = $candidate.FullName
+    $candidate = Get-ChildItem -Path $TempDir -Recurse -File -Filter $ExeName | Select-Object -First 1
+    if (-not $candidate) { Fail "Could not find $ExeName inside the ZIP." }
+
+    $ExeCandidatePath = $candidate.FullName
 }
-elseif ($ext -eq ".exe") {
-  Write-Info "Downloaded EXE."
-  $ExeCandidatePath = $OutPath
+elseif ($ext -eq '.exe') {
+    Write-Info 'Downloaded EXE.'
+    $ExeCandidatePath = $OutPath
 }
 else {
-  Fail "Unsupported downloaded file type: $ext (expected .exe or .zip)"
+    Fail "Unsupported downloaded file type: $ext (expected .exe or .zip)"
 }
 
 # -----------------------------
 # Check WireGuard
 # -----------------------------
-if (!(Get-Command "wireguard")) {
-  $WgDownloadUrl = "https://download.wireguard.com/windows-client/wireguard-$Arch-$WgVERSION.msi"
-  $WgInstallerPath = Join-Path $TempDir "wireguard-$Arch-$WgVERSION.msi"
-  Write-Info "Downloading: $WgDownloadUrl to $WgInstallerPath"
-  Invoke-WebRequest -Uri `
-    -Uri $WgDownloadUrl `
-    -OutFile $WgInstallerPath
-  if (!(Test-Path $WgInstallerPath)) {
-    Fail "Download failed (file not found): $WgInstallerPath"
-  }
+if (-not (Get-Command 'wireguard' -ErrorAction SilentlyContinue)) {
+    $WgArch = if ($Arch -eq 'amd64') { 'amd64' } else { 'x86' }
+    $WgDownloadUrl = "https://download.wireguard.com/windows-client/wireguard-$WgArch-$WgVERSION.msi"
+    $WgInstallerPath = Join-Path $TempDir "wireguard-$WgArch-$WgVERSION.msi"
 
-  msiexec /i $WgInstallerPath /qn
+    Write-Info "Downloading: $WgDownloadUrl -> $WgInstallerPath"
+    Invoke-WebRequest -Uri $WgDownloadUrl -OutFile $WgInstallerPath -UseBasicParsing
 
-  if (!(Get-Command "wireguard")) {
-    Fail "WireGuard installation failed."
-  } else {
-    Write-Info "WireGuard installed successfully."
-  }
+    if (-not (Test-Path -LiteralPath $WgInstallerPath)) {
+        Fail "Download failed (file not found): $WgInstallerPath"
+    }
+
+    Write-Info 'Installing WireGuard...'
+    $proc = Start-Process -FilePath msiexec.exe -ArgumentList @(
+        '/i', $WgInstallerPath,
+        '/qn',
+        '/norestart'
+    ) -Wait -PassThru
+    if ($proc.ExitCode -ne 0) {
+        Fail "WireGuard MSI failed with exit code $($proc.ExitCode)"
+    }
+    Get-Process -Name 'WireGuard' -ErrorAction SilentlyContinue | Stop-Process -Force
 }
 
 # -----------------------------
 # Install
 # -----------------------------
-
 $TargetExe = Join-Path $InstallDir $ExeName
 
-#STOP AND DELETE SERVICE
-
-# sc stop $ServiceName 
-Stop-Service -Name $ServiceName -Force
-
-sc delete $ServiceName 
-
-if (Test-Path $TargetExe) {
-  $backup = "$TargetExe.bak"
-  Copy-Item $TargetExe $backup -Force
-  Write-Info "Backed up existing binary to: $backup"
+# Stop and delete service (if it exists)
+$svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+if ($svc) {
+    Write-Info "Stopping service: $ServiceName"
+    Stop-Service -Name $ServiceName -Force -ErrorAction SilentlyContinue
+    Write-Info "Deleting service: $ServiceName"
+    & sc.exe delete $ServiceName | Out-Null
 }
 
-Copy-Item $ExeCandidatePath $TargetExe -Force
+if (Test-Path -LiteralPath $TargetExe) {
+    $backup = "$TargetExe.bak"
+    Copy-Item -LiteralPath $TargetExe -Destination $backup -Force
+    Write-Info "Backed up existing binary: $backup"
+}
+
+Copy-Item -LiteralPath $ExeCandidatePath -Destination $TargetExe -Force
 Write-Info "Installed: $TargetExe"
 
-# INSTALL TARGET EXE AS SERVICE AND START IT
-$TargetExe --install
+& $TargetExe install
 
 # -----------------------------
 # PATH
@@ -150,15 +172,15 @@ Write-Info "Added to PATH (User): $InstallDir"
 # -----------------------------
 # Cleanup
 # -----------------------------
-if (Test-Path $TempDir) {
-  Remove-Item -Recurse -Force $TempDir -ErrorAction SilentlyContinue
+if (Test-Path -LiteralPath $TempDir) {
+    Remove-Item -Recurse -Force -LiteralPath $TempDir -ErrorAction SilentlyContinue
 }
 
 # -----------------------------
 # Verify
 # -----------------------------
-Write-Info "Verifying install..."
+Write-Info 'Verifying install...'
 & $TargetExe --version 2>$null | Out-Null
 
-Write-Info "Done!"
-Write-Info "Try: wiredoor --help"
+Write-Info 'Done!'
+Write-Info 'Try: wiredoor --help'
