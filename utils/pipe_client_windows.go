@@ -16,6 +16,7 @@ import (
 Copyright © 2024 Daniel Mesa <support@wiredoor.net>
 */
 var WiredoorPipePathName string = `\\.\pipe\wiredoorServicePipe`
+var readPipeTimeOut = 20000 //20 secs max
 
 //Example data to send:
 // jsonToSend := make(map[string]interface{})
@@ -74,7 +75,7 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 				return
 			}
 			// 10 seconds = 10000 miliseconds
-			readStatus, err := windows.WaitForSingleObject(readOverlaped.HEvent, uint32(10000))
+			readStatus, err := windows.WaitForSingleObject(readOverlaped.HEvent, uint32(readPipeTimeOut))
 			if err != nil {
 				slog.Error(fmt.Sprintf("event wait error: %v", err))
 				return

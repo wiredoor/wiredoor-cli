@@ -296,7 +296,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 					monitoringMutex.Unlock()
 
 				} else {
-					slog.Info("error reading pipe: %v", err)
+					slog.Info("error reading pipe", "error", err)
 				}
 			} else {
 				slog.Warn("pipe not ready")

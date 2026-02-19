@@ -63,7 +63,7 @@ Typical usage:
 			os.Exit(1)
 		}
 		if isWindowsService {
-			slog.Error(fmt.Sprintf("error, connect command not usable as service"))
+			slog.Error("error, connect command not usable as service")
 			os.Exit(1)
 		}
 
