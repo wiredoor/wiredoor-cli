@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"net"
 	"os/exec"
 	"regexp"
@@ -46,12 +47,22 @@ func LocalServerIP() string {
 	if err != nil || len(addrs) == 0 {
 		return ""
 	}
-	ip, _, _ := net.ParseCIDR(addrs[0].String())
+	ip, _, err := net.ParseCIDR(addrs[0].String())
+
+	if err != nil {
+		slog.Info("ParseCIDR error", "error", err)
+		return ""
+	}
 
 	ipv4 := ip.To4()
 
 	serverIP := make(net.IP, len(ipv4))
 	copy(serverIP, ipv4)
+
+	if len(serverIP) < 4 {
+		slog.Info("serverIP shrot len", "len", len(serverIP))
+		return ""
+	}
 
 	serverIP[3] = 1
 
