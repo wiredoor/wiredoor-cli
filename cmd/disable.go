@@ -40,7 +40,7 @@ Use 'wiredoor enable' to re-enable the service later.`,
 		serviceId := args[1]
 
 		if serviceType != "http" && serviceType != "tcp" {
-			fmt.Println("❌ Invalid service type. Must be 'http' or 'tcp'.")
+			fmt.Println("Invalid service type. Must be 'http' or 'tcp'.")
 			return
 		}
 

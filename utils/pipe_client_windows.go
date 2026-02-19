@@ -6,7 +6,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"golang.org/x/sys/windows"
@@ -50,7 +50,7 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 			return nil, fmt.Errorf("error when write to pipe: %v", err)
 		}
 		if int(writtenLen) != len(data) {
-			log.Printf("Warninig message not fully sended, sended %v of %v bytes", writtenLen, len(data))
+			slog.Warn(fmt.Sprintf("message not fully sended, sended %v of %v bytes", writtenLen, len(data)))
 		}
 	} else {
 		return nil, fmt.Errorf("marshal error: %v", err)
@@ -70,13 +70,13 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 
 			err := windows.ReadFile(wiredoorPipeHandle, readBuff, &readLen, readOverlaped)
 			if err != nil && err != windows.ERROR_IO_PENDING {
-				log.Printf("overlaped read error: %v", err)
+				slog.Error(fmt.Sprintf("overlaped read error: %v", err))
 				return
 			}
 			// 10 seconds = 10000 miliseconds
 			readStatus, err := windows.WaitForSingleObject(readOverlaped.HEvent, uint32(10000))
 			if err != nil {
-				log.Printf("event wait error: %v", err)
+				slog.Error(fmt.Sprintf("event wait error: %v", err))
 				return
 			}
 			switch readStatus {
@@ -84,7 +84,7 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 				//HURRA
 				err = windows.GetOverlappedResult(wiredoorPipeHandle, readOverlaped, &readLen, true)
 				if err != nil {
-					log.Printf("err on get overlaped result: %v", err)
+					slog.Error("err on get overlaped result", "error", err)
 					return
 				}
 			case uint32(windows.WAIT_TIMEOUT):
@@ -92,7 +92,7 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 			}
 			readChanErr <- err
 		} else {
-			log.Printf("event creation error: %v", err)
+			slog.Error("event creation error", "error", err)
 			return
 		}
 		readChanErr <- nil
@@ -100,7 +100,7 @@ func ExecuteLocalSystemServiceTask(jsonToSend map[string]interface{}) ([]byte, e
 	//end ruitine
 	select {
 	case <-time.After(10 * time.Second):
-		log.Printf("Warinig, service response timed out after 10 seconds")
+		slog.Error("Warinig, service response timed out after 10 seconds")
 	case err, ok := <-readChanErr:
 		if !ok {
 			return nil, fmt.Errorf("I/O error,read channel closed")

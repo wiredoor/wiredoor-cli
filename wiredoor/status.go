@@ -72,7 +72,7 @@ func CheckWiredoorServer(debug bool) bool {
 		if debug {
 			config := GetApiConfig()
 			utils.Terminal().FinalizeProgress()
-			utils.Terminal().Section("✔ Connection successful to: " + config.VPN_HOST)
+			utils.Terminal().Section("Connection successful to: " + config.VPN_HOST)
 		}
 		return true
 	}

@@ -10,7 +10,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -141,12 +141,12 @@ Prompts will guide you through the registration and configuration process.`,
 		if err != nil {
 
 			fmt.Printf("error detecting if I am a service, %v\n", err)
-			log.Printf("error detecting if I am a service, %v\n", err)
+			slog.Error(fmt.Sprintf("error detecting if I am a service, %v\n", err))
 			os.Exit(1)
 		}
 		if isWindowsService {
 			fmt.Print("error, connect command not usable as service")
-			log.Print("error, connect command not usable as service")
+			slog.Error("error, connect command not usable as service")
 			os.Exit(1)
 		}
 
@@ -163,21 +163,21 @@ Prompts will guide you through the registration and configuration process.`,
 						os.Exit(0)
 					default:
 						fmt.Printf("Fail due to unhandled service reposnse: %v", response)
-						log.Printf("unhandled service reposnse: %v", response)
+						slog.Error(fmt.Sprintf("unhandled service reposnse: %v", response))
 						os.Exit(1)
 					}
 				} else {
 					fmt.Printf("Fail due to service reposnse format: %v", string(resp))
-					log.Printf("response format error: %v", resp)
+					slog.Error(fmt.Sprintf("response format error: %v", resp))
 					os.Exit(1)
 				}
 			} else {
 				fmt.Printf("Fail due to service reposnse format: %v", string(resp))
-				log.Printf("response format error: %v", resp)
+				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}
 		} else {
-			log.Printf("Service comunication error: %v", err)
+			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
 			os.Exit(1)
 		}
 	},

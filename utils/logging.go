@@ -14,17 +14,19 @@ type LoggingOptions struct {
 
 	Level slog.Level // default info
 
-	MaxSizeMB  int // default 25
-	MaxBackups int // default 5
-	MaxAgeDays int // default 14
+	MaxSizeMB  int  // default 25
+	MaxBackups int  // default 5
+	MaxAgeDays int  // default 14
 	Compress   bool // default true
 
 	AppName    string
 	AppVersion string
+
+	AddSource bool // default false
 }
 
 type Logger struct {
-	L     *slog.Logger
+	L      *slog.Logger
 	closer *lumberjack.Logger
 }
 
@@ -34,6 +36,7 @@ func New(opts LoggingOptions) (*Logger, error) {
 		return &Logger{L: nil, closer: nil}, nil
 	}
 
+	//lumberjack.Logger already do it?
 	if err := EnsureDir(opts.File); err != nil {
 		return nil, err
 	}
@@ -51,7 +54,7 @@ func New(opts LoggingOptions) (*Logger, error) {
 		level = slog.LevelInfo
 	}
 
-	h := slog.NewJSONHandler(lj, &slog.HandlerOptions{Level: level})
+	h := slog.NewJSONHandler(lj, &slog.HandlerOptions{Level: level, AddSource: opts.AddSource})
 	l := slog.New(h)
 
 	if opts.AppName != "" {

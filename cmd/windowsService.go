@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"syscall"
@@ -49,14 +50,14 @@ func createWindowsSecurityDescriptor() (sd *windows.SECURITY_DESCRIPTOR, err err
 	if err != nil {
 		return nil, err
 	}
-	log.Println(authSID.String())
+	slog.Info("Allowed SID WinAuthenticatedUserSid: " + authSID.String())
 	// !! DO NOT FREE, created using CreateWellKnownSid
 	// defer windows.FreeSid(authSID)
 	adminSID, err := windows.CreateWellKnownSid(windows.WinBuiltinAdministratorsSid)
 	if err != nil {
 		return nil, err
 	}
-	log.Println(adminSID.String())
+	slog.Info("Allowed SID WinAuthenticatedUserSid: " + adminSID.String())
 	// !! DO NOT FREE, created using CreateWellKnownSid
 	// defer windows.FreeSid(adminSID)
 	explicitAcces := []windows.EXPLICIT_ACCESS{
@@ -122,14 +123,14 @@ func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
 								UseDaemon: true,
 								SetDaemon: false})
 						if err != nil {
-							log.Printf("[%s connect] %v", utils.WiredoorServiceName, err)
+							slog.Error(fmt.Sprintf("[%s connect] %v", utils.WiredoorServiceName, err))
 							sendResponse(fmt.Sprintf("[%s connect] %v", utils.WiredoorServiceName, err), wiredoorPipeHandle)
 						} else {
 							sendResponse("ok", wiredoorPipeHandle)
 						}
 					} else {
-						log.Printf("Ignored connect: Wireguard Interface Exists")
-						sendResponse("Ignored connect: Wireguard Interface Exists", wiredoorPipeHandle)
+						slog.Error(fmt.Sprintf("Ignored connect: Wireguard Interface Exists"))
+						sendResponse("Already Connected", wiredoorPipeHandle)
 					}
 				case "disconnect":
 					wiredoor.Disconnect()
@@ -139,22 +140,22 @@ func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
 				case "regenerate":
 					wiredoor.Disconnect()
 					if err := wiredoor.RegenerateKeys(); err != nil {
-						sendResponse(fmt.Sprintf("Regenerate error: %v", err), wiredoorPipeHandle)
+						sendResponse(fmt.Sprintf("SERVICE DOWN:Regenerate error: %v", err), wiredoorPipeHandle)
 					} else {
 						sendResponse("ok", wiredoorPipeHandle)
 					}
 				default:
-					log.Printf("invalid command : %v", commandStr)
+					slog.Error(fmt.Sprintf("invalid command : %v", commandStr))
 					sendResponse(fmt.Sprintf("invalid command : %v", commandStr), wiredoorPipeHandle)
 				}
 			} else {
-				log.Printf("invalid command type: %v", string(data))
+				slog.Error(fmt.Sprintf("invalid command type: %v", string(data)))
 				sendResponse(fmt.Sprintf("invalid command type: %v", string(data)), wiredoorPipeHandle)
 			}
 		}
 
 	} else {
-		log.Printf("error on json decoding `data section(`%s`)` : %v", string(data), err)
+		slog.Error(fmt.Sprintf("error on json decoding `data section(`%s`)` : %v", string(data), err))
 		sendResponse(fmt.Sprintf("error on json decoding `data section(`%s`)` : %v", string(data), err), wiredoorPipeHandle)
 	}
 }
@@ -177,7 +178,7 @@ type wiredoorWindowsService struct{}
 
 func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- svc.Status) (bool, uint32) {
 
-	log.Printf("Starting service, execute args: %v\n", args)
+	slog.Info(fmt.Sprintf("Starting service, execute args: %v\n", args))
 	s <- svc.Status{State: svc.StartPending}
 	//running
 	//channel close ends all subroutines
@@ -187,7 +188,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 
 	// create go routine for monitoring
 
-	log.Println("Begin monitoring routine")
+	slog.Info("Begin monitoring routine")
 	sleepSeconds := serviceInterval
 	if sleepSeconds <= 0 {
 		sleepSeconds = 10
@@ -195,7 +196,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 	//prevent kill when monitoring
 	var monitoringMutex sync.Mutex
 	go func() {
-		log.Println("Monitoring routine")
+		slog.Info("Monitoring routine")
 		for {
 			//wait 10 seconds before new check
 			time.Sleep(time.Duration(sleepSeconds) * time.Second)
@@ -207,16 +208,16 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 
 	//routine to manage comunications from no root app
 
-	log.Println("Begin ipc routine")
+	slog.Info("Begin ipc routine")
 
 	//!WARNIG Kill this MF to not block routine
 
 	go func() {
 
-		// log.Printf("wiredoorPipeSecurityAttributes")
+		// slog.Info("wiredoorPipeSecurityAttributes")
 		sd, err := createWindowsSecurityDescriptor()
 		if err != nil {
-			log.Printf("Error creating windows security descriptor: %v", err)
+			slog.Info(fmt.Sprintf("Error creating windows security descriptor: %v", err))
 		}
 
 		wiredoorPipeSecurityAttributes := windows.SecurityAttributes{
@@ -224,7 +225,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 			InheritHandle:      1,
 			SecurityDescriptor: sd,
 		}
-		// log.Printf("wiredoorPipeSecurityAttributes done")
+		// slog.Debug("wiredoorPipeSecurityAttributes done")
 
 		//open server side pipe
 
@@ -241,44 +242,44 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 				// nil,
 			)
 			if err != nil {
-				log.Printf("error creating pipe server on service,%v", err)
+				slog.Error(fmt.Sprintf("[FATAL] error creating pipe server on service,%v", err))
 				os.Exit(1)
 			}
-			log.Printf("CreateNamedPipe done")
+			slog.Info("Create Named Pipe done")
 
 			//wait client
 			err = windows.ConnectNamedPipe(wiredoorPipeHandle, nil)
 			pipeReady := false
 			if err == nil {
-				log.Printf("Pipe created\n")
+				slog.Debug("Pipe created\n")
 				pipeReady = true
 			} else {
 				if errno, ok := err.(syscall.Errno); ok {
 					switch errno {
 					case windows.ERROR_PIPE_CONNECTED:
-						log.Printf("ERROR_PIPE_CONNECTED\n")
+						slog.Error("ERROR_PIPE_CONNECTED\n")
 						pipeReady = true
 					case windows.ERROR_NO_DATA:
-						log.Printf("ERROR_NO_DATA Pipe closed: %w\n", err)
+						slog.Error("ERROR_NO_DATA Pipe closed: %w\n", err)
 					case windows.ERROR_PIPE_LISTENING: // not ready, continue
-						log.Printf("ERROR_PIPE_LISTENING not ready,listening\n")
+						slog.Error("ERROR_PIPE_LISTENING not ready,listening\n")
 					case windows.ERROR_PIPE_BUSY:
-						log.Println("ERROR_PIPE_BUSY")
+						slog.Error("ERROR_PIPE_BUSY")
 					case windows.ERROR_INVALID_HANDLE:
-						log.Printf("ERROR_INVALID_HANDLE invalid server handle: %v", err)
+						slog.Error(fmt.Sprintf("ERROR_INVALID_HANDLE invalid server handle: %v", err))
 					case windows.ERROR_ACCESS_DENIED:
-						log.Printf("ERROR_ACCESS_DENIED")
+						slog.Error("ERROR_ACCESS_DENIED")
 					case windows.ERROR_OPERATION_ABORTED:
-						log.Printf("ERROR_OPERATION_ABORTED")
+						slog.Error("ERROR_OPERATION_ABORTED")
 					default:
-						log.Printf("server listen error: %v", err)
+						slog.Error(fmt.Sprintf("server listen error: %v", err))
 					}
 				} else {
-					log.Printf("bad cast error\n")
+					slog.Error("bad cast error\n")
 				}
 			}
 			// wait incoming data
-			log.Printf("Start reading")
+			slog.Info("Start reading")
 			if pipeReady {
 				var numBytes uint32
 				buff := make([]byte, 1024)
@@ -295,10 +296,10 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 					monitoringMutex.Unlock()
 
 				} else {
-					log.Printf("error reading pipe: %v", err)
+					slog.Info("error reading pipe: %v", err)
 				}
 			} else {
-				log.Printf("pipe not ready")
+				slog.Warn("pipe not ready")
 			}
 			windows.CloseHandle(wiredoorPipeHandle)
 		}
@@ -310,16 +311,16 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 		switch c.Cmd {
 		case svc.Stop, svc.Shutdown:
 			s <- svc.Status{State: svc.StopPending} //notify status
-			log.Printf("Stop service\n")
+			slog.Info("Stop service\n")
 			//alert runing goroutine
 			close(routineComs)
 			//wait for cleanup
-			log.Printf("Wait for cleanup\n")
+			slog.Info("Wait for cleanup\n")
 			//do not stop monitoring when running
 			monitoringMutex.Lock()
 
 			waitGroupMonitor.Wait()
-			log.Printf("The end\n")
+			slog.Info("The end\n")
 			return false, 0
 		default:
 		}
@@ -354,17 +355,18 @@ Examples:
 		isService, err := svc.IsWindowsService()
 
 		if err != nil {
-			log.Print("Unable to determine if running as service")
-			log.Fatal(err)
+			fmt.Print("Unable to determine if running as service")
+			slog.Error(fmt.Sprintf("Service detection error: %v", err))
+			os.Exit(1)
 		}
 		if isService {
 			err = svc.Run(utils.WiredoorServiceName, &wiredoorWindowsService{})
 			if err != nil {
-				log.Print("Fail to start service mode\n")
+				slog.Error("Fail to start service mode")
 				os.Exit(1)
 			}
 		} else {
-			log.Print("Running as console app, made for run as service ...\n")
+			fmt.Print("Running as console app, made for run as service ...\n")
 			os.Exit(1)
 		}
 	},

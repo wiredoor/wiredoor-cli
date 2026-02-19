@@ -10,7 +10,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -41,11 +41,12 @@ Examples:
 
 		isWindowsService, err := svc.IsWindowsService()
 		if err != nil {
-			log.Printf("error detecting if I am a service, %v\n", err)
+			fmt.Printf("Wiredoor service detection error: %v\n", err)
+			slog.Error(fmt.Sprintf("Service detection error, %v\n", err))
 			os.Exit(1)
 		}
 		if isWindowsService {
-			log.Print("error, connect command not usable as service")
+			slog.Error("error, connect command not usable as service")
 			os.Exit(1)
 		}
 
@@ -65,22 +66,22 @@ Examples:
 						os.Exit(0)
 					default:
 						fmt.Printf("Fail due to unhandled service response: %v\n", response)
-						log.Printf("unhandled service response: %v", response)
+						slog.Error(fmt.Sprintf("unhandled service response: %v", response))
 						os.Exit(1)
 					}
 				} else {
 					fmt.Printf("Fail due to service response format: %v\n", string(resp))
-					log.Printf("response format error: %v", resp)
+					slog.Error(fmt.Sprintf("response format error: %v", resp))
 					os.Exit(1)
 				}
 			} else {
 				fmt.Printf("Fail due to service response format: %v\n", string(resp))
-				log.Printf("response format error: %v", resp)
+				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}
 		} else {
 			fmt.Printf("Service communication error: %v\n", err)
-			log.Printf("Service communication error: %v", err)
+			slog.Error(fmt.Sprintf("Service communication error: %v", err))
 			os.Exit(1)
 		}
 	},

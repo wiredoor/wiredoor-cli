@@ -53,7 +53,7 @@ Note:
 		}
 
 		if _, _, err := net.ParseCIDR(gatewaySubnet); err != nil {
-			fmt.Printf("❌ Invalid subnet format: %s\n", gatewaySubnet)
+			fmt.Printf("Invalid subnet format: %s\n", gatewaySubnet)
 			return
 		}
 

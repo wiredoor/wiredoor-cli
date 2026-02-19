@@ -5,7 +5,7 @@ package wiredoor
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/exec"
@@ -56,13 +56,13 @@ func ConnectApi(connection ConnectionConfig) error {
 			nodeType = "gateway"
 		}
 
-		log.Printf("Connecting %s %s...\n", nodeType, node.Name)
+		slog.Info(fmt.Sprintf("Connecting %s %s...", nodeType, node.Name))
 
 		// Using wireguard service
 		if err := manualWindowsConnect(); err != nil {
 			return err
 		}
-		log.Println("Waiting for connection (5 secs max)")
+		slog.Info("Waiting for connection (5 secs max)")
 
 		// 5 secs max
 		tunnelExists := false
@@ -112,11 +112,10 @@ func Disconnect() {
 }
 
 func ensureRoot() {
-
 	adminCheck := exec.Command("net", "session")
 
 	if err := adminCheck.Run(); err != nil {
-		log.Println("Permission denied: Admin privileges are required")
+		slog.Error("Permission denied: Admin privileges are required")
 		os.Exit(1)
 	}
 	// var token windows.Token
@@ -147,20 +146,20 @@ func manualWindowsConnect() error {
 	//cleanup
 	exists, err := utils.ServiceExists("WireGuardTunnel$" + utils.TunnelName)
 	if err != nil {
-		log.Printf("Warning, unable to determine if tunnel service exists, assuming true : %v", err)
+		slog.Warn("Unable to determine if tunnel service exists, assuming true", "error", err)
 		exists = true
 	}
 	if exists {
 		//sc stop WireGuardTunnel$wg0
 		stop := exec.Command("sc", "stop", "WireGuardTunnel$"+utils.TunnelName)
 		if err := stop.Run(); err != nil {
-			log.Printf("Warnig: Unable to stop tunnel service: %v \n", err)
+			slog.Error("Unable to stop tunnel service", "error", err)
 		}
 
 		//wireguard /uninstalltunnelservice wg0
 		down := exec.Command("wireguard", "/uninstalltunnelservice", utils.TunnelName)
 		if err := down.Run(); err != nil {
-			log.Printf("Error: Unable to disconnect wireguard tunnel: %v", err)
+			slog.Error("Unable to disconnect wireguard tunnel", "error", err)
 		}
 	}
 
@@ -205,12 +204,12 @@ func manualWindowsRestart() {
 	//sc stop WireGuardTunnel$wg0
 	stop := exec.Command("sc", "stop", "WireGuardTunnel$"+utils.TunnelName)
 	if err := stop.Run(); err != nil {
-		log.Println("Warning:  Unable to stop tunnel service")
+		slog.Warn("Unable to stop tunnel service", "error", err)
 	}
 	//sc start WireGuardTunnel$wg0
 	start := exec.Command("sc", "start", "WireGuardTunnel$"+utils.TunnelName)
 	if err := start.Run(); err != nil {
-		log.Println("Warning:  Unable to start tunnel service")
+		slog.Warn("Unable to start tunnel service", "error", err)
 	}
 }
 
@@ -220,20 +219,20 @@ func manualWindowsDisconnect() {
 
 	exists, err := utils.ServiceExists("WireGuardTunnel$" + utils.TunnelName)
 	if err != nil {
-		log.Printf("Warning, unable to determine if tunnel service exists, assuming true : %v", err)
+		slog.Warn("Unable to determine if tunnel service exists, assuming true", "error", err)
 		exists = true
 	}
 	if exists {
 		//sc stop WireGuardTunnel$wg0
 		stop := exec.Command("sc", "stop", "WireGuardTunnel$"+utils.TunnelName)
 		if err := stop.Run(); err != nil {
-			log.Printf("Warning: Unable to stop tunnel service: %v \n", err)
+			slog.Warn("Unable to stop tunnel service", "error", err)
 		}
 
 		//wireguard /uninstalltunnelservice wg0
 		down := exec.Command("wireguard", "/uninstalltunnelservice", utils.TunnelName)
 		if err := down.Run(); err != nil {
-			log.Printf("Error: Unable to disconnect wireguard tunnel: %v", err)
+			slog.Error("Unable to disconnect wireguard tunnel: ", "error", err)
 		}
 	}
 
@@ -279,7 +278,7 @@ func interfaceExists() bool {
 		}
 		return false
 	} else {
-		log.Printf("error on list interface names: %v", err)
+		slog.Error("error on list interface names", "error", err)
 		return false
 	}
 }

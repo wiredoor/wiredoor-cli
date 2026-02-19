@@ -10,7 +10,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -58,14 +58,12 @@ Typical usage:
 
 		isWindowsService, err := svc.IsWindowsService()
 		if err != nil {
-
-			fmt.Printf("error detecting if I am a service, %v\n", err)
-			log.Printf("error detecting if I am a service, %v\n", err)
+			fmt.Printf("Wiredoor service detection error: %v\n", err)
+			slog.Error(fmt.Sprintf("Service detection error, %v\n", err))
 			os.Exit(1)
 		}
 		if isWindowsService {
-			fmt.Print("error, connect command not usable as service")
-			log.Print("error, connect command not usable as service")
+			slog.Error(fmt.Sprintf("error, connect command not usable as service"))
 			os.Exit(1)
 		}
 
@@ -83,32 +81,30 @@ Typical usage:
 					case "ok":
 						wiredoor.Status()
 						os.Exit(0)
+					case "Already Connected":
+						wiredoor.Status()
+						os.Exit(0)
 					default:
 						fmt.Printf("Error: %v", response)
-						log.Printf("Error: %v", response)
+						slog.Error(fmt.Sprintf("Error: %v", response))
 						os.Exit(1)
 					}
 				} else {
-					fmt.Printf("Fail due to service reposnse format: %v", string(resp))
-					log.Printf("response format error: %v", resp)
+					fmt.Printf("Service response format error or missing field: %v", string(resp))
+					slog.Error(fmt.Sprintf("Service response format error or missing field: %v", resp))
 					os.Exit(1)
 				}
 			} else {
 				fmt.Printf("Fail due to service reposnse format: %v", string(resp))
-				log.Printf("response format error: %v", resp)
+				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}
 		} else {
 			fmt.Printf("Service comunication error: %v\n", err)
-			log.Printf("Service comunication error: %v", err)
+			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
 			os.Exit(1)
 		}
 
-		//check for admin
-
-		// if !wiredoor.WireguardInterfaceExists() {
-		// 	wiredoor.Connect(wiredoor.ConnectionConfig{URL: url, Token: token, UseDaemon: useDaemon, SetDaemon: setDaemon})
-		// }
 	},
 }
 

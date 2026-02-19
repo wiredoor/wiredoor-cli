@@ -5,7 +5,7 @@ package utils
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"slices"
 	"syscall"
@@ -114,12 +114,12 @@ func DeleteService(serviceName string) error {
 	if serviceConnection, err := serviceMangerConnection.OpenService(serviceName); err == nil {
 		defer serviceConnection.Close()
 		if err := serviceConnection.Delete(); err != nil {
-			log.Printf("unable to delete service: %v", err)
+			slog.Error("unable to delete service", "error", err)
 			return fmt.Errorf("unable to delete service: %v", err)
 		}
 		return nil
 	} else {
-		log.Printf("unable to open service: %v", err)
+		slog.Error("unable to open service", "error", err)
 		return fmt.Errorf("unable to open service: %v", err)
 	}
 }
@@ -136,7 +136,7 @@ func CreateServiceFromThisExecutable(serviceName, user, passwd string) error {
 			//WARNING RUN AS SYSTEM
 			serviceConfig = mgr.Config{
 				DisplayName: serviceName,
-				Description: "Wiredoor service",
+				Description: "Wiredoor Service",
 				// BinaryPathName: appPath + " " + serviceArgs,
 				BinaryPathName: fmt.Sprintf(`"%s"`, appPath),
 				StartType:      mgr.StartAutomatic,
@@ -146,7 +146,7 @@ func CreateServiceFromThisExecutable(serviceName, user, passwd string) error {
 			fmt.Printf("user : %s\t|\tpasswd : %s\n", user, passwd)
 			serviceConfig = mgr.Config{
 				DisplayName: serviceName,
-				Description: "Wiredoor service",
+				Description: "Wiredoor Service",
 				// BinaryPathName: appPath + " " + serviceArgs,
 				BinaryPathName:   fmt.Sprintf(`"%s"`, appPath),
 				StartType:        mgr.StartAutomatic,
@@ -177,20 +177,20 @@ func StartService(serviceName string) error {
 		//serviceArgs are pased as service args plus app args on BinaryPathName field of serviceConfig
 		defer serviceConnection.Close()
 		if serviceCfg, err := serviceConnection.Config(); err != nil {
-			log.Printf("unable to get service config: %v", err)
+			slog.Error("unable to get service config", "error", err)
 		} else {
 			serviceCfg.StartType = mgr.StartAutomatic
 			if err := serviceConnection.UpdateConfig(serviceCfg); err != nil {
-				log.Printf("unable to update service config: %v", err)
+				slog.Error("unable to update service config", "error", err)
 			}
 		}
 		if err := serviceConnection.Start(""); err != nil {
-			log.Printf("unable to start service: %v", err)
+			slog.Error("unable to start service", "error", err)
 			return fmt.Errorf("unable to start service: %v", err)
 		}
 		return nil
 	} else {
-		log.Printf("unable to open service: %v", err)
+		slog.Error("unable to open service", "error", err)
 		return fmt.Errorf("unable to open service: %v", err)
 	}
 }
@@ -205,26 +205,26 @@ func StopService(serviceName string) error {
 		if serviceList, err := serviceMangerConnection.ListServices(); err == nil {
 			if !slices.Contains(serviceList, serviceName) {
 				//not listed
-				log.Printf("not stoped, wiredoor service not found")
+				slog.Error("not stoped, wiredoor service not found")
 				return fmt.Errorf("not stoped, wiredoor service not found")
 			}
 			//query stop service
 			if serviceConnection, err := serviceMangerConnection.OpenService(serviceName); err == nil {
 				if _, err := serviceConnection.Control(svc.Stop); err != nil {
-					log.Printf("unable to stop service: %v", err)
+					slog.Error("unable to stop service", "error", err)
 					return fmt.Errorf("unable to stop service: %v", err)
 				}
 				return nil
 			} else {
-				log.Printf("unable to open service: %v", err)
+				slog.Error("unable to open service", "error", err)
 				return fmt.Errorf("unable to open service: %v", err)
 			}
 		} else {
-			log.Printf("error listing serices: %v", err)
+			slog.Error("error listing serices", "error", err)
 			return fmt.Errorf("error listing serices: %v", err)
 		}
 	} else {
-		log.Printf("unable to access to service manager: %v", err)
+		slog.Error("unable to access to service manager", "error", err)
 		return fmt.Errorf("unable to access to service manager: %v", err)
 	}
 }
@@ -234,14 +234,10 @@ func RestartService() error {
 	if exists, _ := WiredoorServiceExists(); exists {
 		err := StopService(WiredoorServiceName)
 		if err != nil {
-			log.Printf("Warning, when try to stop service: %v", err)
+			slog.Warn("When try to stop service", "error", err)
 		}
 	} else {
-		user, passwd, err := CreateServiceAccount(WiredoorServiceName)
-		if err != nil {
-			return err
-		}
-		err = CreateServiceFromThisExecutable(WiredoorServiceName, user, passwd)
+		err := CreateServiceFromThisExecutable(WiredoorServiceName, "", "")
 		if err != nil {
 			return err
 		}
@@ -270,27 +266,27 @@ func DisableService(serviceName string) error {
 			if serviceConnection, err := serviceMangerConnection.OpenService(serviceName); err == nil {
 				defer serviceConnection.Close()
 				if serviceCfg, err := serviceConnection.Config(); err != nil {
-					log.Printf("unable to get service config: %v", err)
+					slog.Error("unable to get service config", "error", err)
 					return fmt.Errorf("unable to get service config: %v", err)
 				} else {
 					serviceCfg.StartType = mgr.StartDisabled
 					if err := serviceConnection.UpdateConfig(serviceCfg); err != nil {
-						log.Printf("unable to update service config: %v", err)
+						slog.Error("unable to update service config", "error", err)
 						return fmt.Errorf("unable to update service config: %v", err)
 					}
 					StopService(serviceName)
 				}
 				return nil
 			} else {
-				log.Printf("unable to open service: %v", err)
+				slog.Error("unable to open service", "error", err)
 				return fmt.Errorf("unable to open service: %v", err)
 			}
 		} else {
-			log.Printf("error listing serices: %v", err)
+			slog.Error("error listing serices", "error", err)
 			return fmt.Errorf("error listing serices: %v", err)
 		}
 	} else {
-		log.Printf("unable to access to service manager: %v", err)
+		slog.Error("unable to access to service manager", "error", err)
 		return fmt.Errorf("unable to access to service manager: %v", err)
 	}
 }
