@@ -11,12 +11,10 @@ $TempDir = Join-Path $env:TEMP 'Wiredoor-Install'
 $Arch = if ([Environment]::Is64BitOperatingSystem) { 'amd64' } else { '386' }
 
 # Job artifacts base URL
-# $ReleaseBaseUrl = 'https://github.com/wiredoor/wiredoor-cli/releases/download/latest'
-$ReleaseBaseUrl = 'https://gitlab.infladoor.com/api/v4/projects/40/jobs/1702/artifacts/dist'
+$ReleaseBaseUrl = 'https://github.com/wiredoor/wiredoor-cli/releases/download/latest'
 
 $FileName = "wiredoor_${VERSION}_windows_${Arch}.exe"
 $DownloadUrl = "$ReleaseBaseUrl/$FileName"
-$GitLabToken = $env:GITLAB_TOKEN
 
 # -----------------------------
 # Helper functions
@@ -63,10 +61,6 @@ if (-not (Test-Command 'Invoke-WebRequest')) {
     Fail 'Invoke-WebRequest is not available.'
 }
 
-if ([string]::IsNullOrWhiteSpace($GitLabToken)) {
-    Fail 'GITLAB_TOKEN is not set.'
-}
-
 # Recreate temp
 if (Test-Path -LiteralPath $TempDir) {
     Remove-Item -Recurse -Force -LiteralPath $TempDir -ErrorAction SilentlyContinue
@@ -81,8 +75,7 @@ New-DirectoryIfNotExists $InstallDir
 $OutPath = Join-Path $TempDir ([IO.Path]::GetFileName($DownloadUrl))
 Write-Info "Downloading: $DownloadUrl -> $OutPath"
 
-$headers = @{ 'PRIVATE-TOKEN' = $GitLabToken }
-Invoke-WebRequest -Uri $DownloadUrl -OutFile $OutPath -UseBasicParsing -Headers $headers
+Invoke-WebRequest -Uri $DownloadUrl -OutFile $OutPath -UseBasicParsing
 
 if (-not (Test-Path -LiteralPath $OutPath)) {
     Fail "Download failed (file not found): $OutPath"

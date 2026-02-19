@@ -1,7 +1,7 @@
 .gitlab-ci.yml
 bin
 dist
-etc/wiredoor/config.ini
+**/config.ini
 *.deb
 *.apk
 *.rpm
