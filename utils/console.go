@@ -208,6 +208,7 @@ func (c *Console) FinalizeProgress() {
 
 func (c *Console) clearErrLine() {
 	fmt.Fprint(c.err, "\r\033[2K")
+	fmt.Fprintf(c.out, "        \r") // windows override
 }
 
 func isTerminal(w io.Writer) bool {

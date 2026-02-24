@@ -142,12 +142,13 @@ Prompts will guide you through the registration and configuration process.`,
 
 		isWindowsService, err := svc.IsWindowsService()
 		if err != nil {
-
+			utils.Terminal().StopProgress()
 			utils.Terminal().Errorf("to detect if running as service, %v\n", err)
 			slog.Error(fmt.Sprintf("error detecting if I am a service, %v\n", err))
 			os.Exit(1)
 		}
 		if isWindowsService {
+			utils.Terminal().StopProgress()
 			utils.Terminal().Errorf("login command not usable as service")
 			slog.Error("error, login command not usable as service")
 			os.Exit(1)
@@ -157,6 +158,7 @@ Prompts will guide you through the registration and configuration process.`,
 		jsonToSend["command"] = "connect"
 
 		if resp, err := utils.ExecuteLocalSystemServiceTask(jsonToSend); err == nil {
+			utils.Terminal().StopProgress()
 			jsonResponse := make(map[string]interface{})
 			if err := json.Unmarshal(resp, &jsonResponse); err == nil {
 				if response, ok := jsonResponse["response"].(string); ok {
@@ -180,6 +182,7 @@ Prompts will guide you through the registration and configuration process.`,
 				os.Exit(1)
 			}
 		} else {
+			utils.Terminal().StopProgress()
 			utils.Terminal().Errorf("Service comunication error: %v", err)
 			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
 			os.Exit(1)

@@ -62,14 +62,18 @@ Examples:
 				return
 			}
 		}
+		utils.Terminal().StartProgress("Executing regenerate...")
+		defer utils.Terminal().StopProgress()
+
 		isWindowsService, err := svc.IsWindowsService()
 		if err != nil {
-
+			utils.Terminal().StopProgress()
 			utils.Terminal().Errorf("to detect if running as service, %v\n", err)
 			slog.Error(fmt.Sprintf("error detecting if I am a service, %v\n", err))
 			os.Exit(1)
 		}
 		if isWindowsService {
+			utils.Terminal().StopProgress()
 			utils.Terminal().Errorf("regenerate command not usable as service")
 			slog.Error("error, regenerate command not usable as service")
 			os.Exit(1)
@@ -77,14 +81,12 @@ Examples:
 
 		//2 send disconnect message
 
-		utils.Terminal().StartProgress("Executing regenerate...")
-		defer utils.Terminal().StopProgress()
-
 		//prepare data to send:
 		jsonToSend := make(map[string]interface{})
 		jsonToSend["command"] = "regenerate"
 
 		if resp, err := utils.ExecuteLocalSystemServiceTask(jsonToSend); err == nil {
+			utils.Terminal().StopProgress()
 			jsonResponse := make(map[string]interface{})
 			if err := json.Unmarshal(resp, &jsonResponse); err == nil {
 				if response, ok := jsonResponse["response"].(string); ok {
@@ -108,6 +110,7 @@ Examples:
 				os.Exit(1)
 			}
 		} else {
+			utils.Terminal().StopProgress()
 			utils.Terminal().Errorf("Service comunication error: %v\n", err)
 			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
 			os.Exit(1)

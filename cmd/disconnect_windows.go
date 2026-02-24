@@ -59,6 +59,7 @@ Examples:
 		jsonToSend["command"] = "disconnect"
 
 		if resp, err := utils.ExecuteLocalSystemServiceTask(jsonToSend); err == nil {
+			utils.Terminal().StopProgress()
 			jsonResponse := make(map[string]interface{})
 			if err := json.Unmarshal(resp, &jsonResponse); err == nil {
 				if response, ok := jsonResponse["response"].(string); ok {
@@ -82,6 +83,7 @@ Examples:
 				os.Exit(1)
 			}
 		} else {
+			utils.Terminal().StopProgress()
 			utils.Terminal().Printf("Service communication error: %v\n", err)
 			slog.Error(fmt.Sprintf("Service communication error: %v", err))
 			os.Exit(1)

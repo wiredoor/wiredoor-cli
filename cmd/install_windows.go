@@ -65,8 +65,10 @@ var installCmd = &cobra.Command{
 		utils.Terminal().StartProgress(fmt.Sprintf("Installing as service..."))
 		defer utils.Terminal().StopProgress()
 		if err := installService(); err != nil {
+			utils.Terminal().StopProgress()
 			utils.Terminal().Errorf("Installation error: %v\n", err)
 		} else {
+			utils.Terminal().StopProgress()
 			utils.Terminal().Printf("Service installed...\n")
 		}
 	},
