@@ -8,7 +8,6 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -45,7 +44,7 @@ Prompts will guide you through the registration and configuration process.`,
 		url, _ := cmd.Flags().GetString("url")
 
 		if url == "" && !wiredoor.IsServerConfigSet() {
-			fmt.Println("You must define Wiredoor server URL. Please use flag --url and try again.")
+			utils.Terminal().Hint("You must define Wiredoor server URL. Please use flag --url and try again.")
 			return
 		}
 
@@ -80,8 +79,8 @@ Prompts will guide you through the registration and configuration process.`,
 		token, err := wiredoor.AdminLogin(url, username, password)
 
 		if err != nil {
-			printErrorAndExit(err, 1)
-			return
+			utils.Terminal().Errorf("%v", err)
+			os.Exit(1)
 		}
 
 		survey.AskOne(&survey.Input{
@@ -126,11 +125,11 @@ Prompts will guide you through the registration and configuration process.`,
 		})
 
 		if err != nil {
-			printErrorAndExit(err, 1)
-			return
+			utils.Terminal().Errorf("Error: %v", err)
+			os.Exit(1)
 		}
 
-		fmt.Printf("Node %s registered successfully!\n", node.Name)
+		utils.Terminal().Printf("Node %s registered successfully!\n", node.Name)
 
 		wiredoor.Connect(wiredoor.ConnectionConfig{})
 	},
@@ -138,11 +137,5 @@ Prompts will guide you through the registration and configuration process.`,
 
 func init() {
 	rootCmd.AddCommand(loginCmd)
-
 	loginCmd.Flags().String("url", "", "URL Domain or Server IP of Wiredoor instance")
-}
-
-func printErrorAndExit(err error, code int) {
-	fmt.Fprintln(os.Stderr, "Error:", err)
-	os.Exit(code)
 }

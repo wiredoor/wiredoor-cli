@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
 )
 
@@ -40,11 +41,14 @@ Use 'wiredoor enable' to re-enable the service later.`,
 		serviceId := args[1]
 
 		if serviceType != "http" && serviceType != "tcp" {
-			fmt.Println("Invalid service type. Must be 'http' or 'tcp'.")
+			utils.Terminal().Println("Invalid service type. Must be 'http' or 'tcp'.")
 			return
 		}
 
-		fmt.Printf("Disabling %s service '%s'...\n", serviceType, serviceId)
+		// utils.Terminal().Printf("Disabling %s service '%s'...\n", serviceType, serviceId)
+
+		utils.Terminal().StartProgress(fmt.Sprintf("Disabling %s service '%s'...\n", serviceType, serviceId))
+		defer utils.Terminal().StopProgress()
 
 		wiredoor.DisableServiceByType(serviceType, serviceId)
 	},

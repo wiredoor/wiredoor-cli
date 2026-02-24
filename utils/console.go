@@ -99,6 +99,13 @@ func (c *Console) Section(title string) {
 	fmt.Fprintln(c.out, title)
 }
 
+func (c *Console) Println(a ...any) {
+	if c.quiet {
+		return
+	}
+	fmt.Fprintln(c.out, a...)
+}
+
 func (c *Console) Printf(format string, args ...any) {
 	if c.quiet {
 		return
@@ -156,7 +163,7 @@ func (c *Console) StartProgress(msg string) {
 		return
 	}
 	if c.sp == nil {
-		c.sp = spinner.New(spinner.CharSets[14], 120*time.Millisecond, spinner.WithWriter(c.err))
+		c.sp = spinner.New(spinner.CharSets[69], 120*time.Millisecond, spinner.WithWriter(c.err))
 	}
 	c.sp.Suffix = " " + msg
 	if !c.spOn {

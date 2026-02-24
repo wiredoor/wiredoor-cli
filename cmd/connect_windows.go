@@ -58,8 +58,8 @@ Typical usage:
 
 		isWindowsService, err := svc.IsWindowsService()
 		if err != nil {
-			fmt.Printf("Wiredoor service detection error: %v\n", err)
-			slog.Error(fmt.Sprintf("Service detection error, %v\n", err))
+			utils.Terminal().Printf("Wiredoor service detection error: %v\n", err)
+			slog.Error("Service detection error", "error", err)
 			os.Exit(1)
 		}
 		if isWindowsService {
@@ -73,6 +73,10 @@ Typical usage:
 		jsonToSend["token"] = token
 		jsonToSend["daemon"] = useDaemon
 
+		utils.Terminal().StartProgress("Connecting...")
+		// IPC does not permit update progress in a easy way
+		defer utils.Terminal().StopProgress()
+
 		if resp, err := utils.ExecuteLocalSystemServiceTask(jsonToSend); err == nil {
 			jsonResponse := make(map[string]interface{})
 			if err := json.Unmarshal(resp, &jsonResponse); err == nil {
@@ -85,22 +89,22 @@ Typical usage:
 						wiredoor.Status()
 						os.Exit(0)
 					default:
-						fmt.Printf("Error: %v", response)
+						utils.Terminal().Printf("Error: %v", response)
 						slog.Error(fmt.Sprintf("Error: %v", response))
 						os.Exit(1)
 					}
 				} else {
-					fmt.Printf("Service response format error or missing field: %v", string(resp))
+					utils.Terminal().Printf("Service response format error or missing field: %v", string(resp))
 					slog.Error(fmt.Sprintf("Service response format error or missing field: %v", resp))
 					os.Exit(1)
 				}
 			} else {
-				fmt.Printf("Fail due to service reposnse format: %v", string(resp))
+				utils.Terminal().Printf("Fail due to service reposnse format: %v", string(resp))
 				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}
 		} else {
-			fmt.Printf("Service comunication error: %v\n", err)
+			utils.Terminal().Printf("Service comunication error: %v\n", err)
 			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
 			os.Exit(1)
 		}

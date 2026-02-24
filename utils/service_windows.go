@@ -143,7 +143,7 @@ func CreateServiceFromThisExecutable(serviceName, user, passwd string) error {
 				ServiceType:    windows.SERVICE_WIN32_OWN_PROCESS,
 			}
 		} else {
-			fmt.Printf("user : %s\t|\tpasswd : %s\n", user, passwd)
+			Terminal().Printf("user : %s\t|\tpasswd : %s\n", user, passwd)
 			serviceConfig = mgr.Config{
 				DisplayName: serviceName,
 				Description: "Wiredoor Service",

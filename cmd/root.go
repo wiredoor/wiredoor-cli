@@ -4,7 +4,6 @@ Copyright © 2024 infladoor - <support@infladoor.com>
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -35,7 +34,7 @@ var rootCmd = &cobra.Command{
 			return
 		}
 		if showVersion {
-			fmt.Printf("Wiredoor CLI version: %s\n", version.Version)
+			utils.Terminal().Printf("Wiredoor CLI version: %s\n", version.Version)
 			os.Exit(0)
 		}
 	},

@@ -355,7 +355,7 @@ Examples:
 		isService, err := svc.IsWindowsService()
 
 		if err != nil {
-			fmt.Print("Unable to determine if running as service")
+			utils.Terminal().Errorf("Unable to determine if running as service")
 			slog.Error(fmt.Sprintf("Service detection error: %v", err))
 			os.Exit(1)
 		}
@@ -366,7 +366,7 @@ Examples:
 				os.Exit(1)
 			}
 		} else {
-			fmt.Print("Running as console app, made for run as service ...\n")
+			utils.Terminal().Errorf("Running as console app, made for run as service ...\n")
 			os.Exit(1)
 		}
 	},

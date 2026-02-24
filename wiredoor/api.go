@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -226,7 +225,7 @@ func ConfigureNode(server string, token string, node NodeParams) (Node, error) {
 		err := json.Unmarshal(resp, &node)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			utils.Terminal().Errorf("Unmarshal: %v", err)
 		}
 
 		if node.Token != "" {
@@ -257,7 +256,8 @@ func GetNode() NodeInfo {
 }
 
 func GetServices() []HttpService {
-	fmt.Println("Getting HTTP services...")
+	// !!!NOT USED ???
+	utils.Terminal().Println("Getting HTTP services...")
 	resp := requestApi(apiRequest{Method: "GET", Path: "/cli/services/http"})
 
 	if resp != nil {
@@ -276,7 +276,8 @@ func GetServices() []HttpService {
 }
 
 func GetTcpServices() []TcpService {
-	fmt.Println("Getting TCP services...")
+	// !!! NOT USED
+	utils.Terminal().Println("Getting TCP services...")
 	resp := requestApi(apiRequest{Method: "GET", Path: "/cli/services/tcp"})
 
 	if resp != nil {

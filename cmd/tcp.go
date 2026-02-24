@@ -4,9 +4,8 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
 )
 
@@ -82,7 +81,7 @@ Examples:
 		node := wiredoor.GetNode()
 
 		if node.IsGateway && tcpBackendHost == "" {
-			fmt.Println("You must define --backendHost when your node is a gateway")
+			utils.Terminal().Hint("You must define --backendHost when your node is a gateway")
 			return
 		}
 

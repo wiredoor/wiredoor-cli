@@ -17,7 +17,7 @@ func CheckPort(host string, port int) bool {
 
 	conn, err := net.DialTimeout("tcp", address, timeout)
 	if err != nil {
-		fmt.Printf("Port %d is closed or unreachable: %v\n", port, err)
+		Terminal().Errorf("Port %d is closed or unreachable: %v\n", port, err)
 		return false
 	}
 	defer conn.Close()

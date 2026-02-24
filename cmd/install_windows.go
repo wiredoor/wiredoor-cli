@@ -15,7 +15,7 @@ import (
 )
 
 func installService() error {
-	fmt.Printf("[wiredoor] Installing windows service...\n")
+	utils.Terminal().Printf("[wiredoor] Installing windows service...\n")
 
 	running, err := utils.WiredoorServiceRunning()
 	if err != nil {
@@ -36,7 +36,7 @@ func installService() error {
 		time.Sleep(3 * time.Second)
 	}
 
-	fmt.Printf("[wiredoor] Starting service %s\n", utils.WiredoorServiceName)
+	utils.Terminal().Printf("[wiredoor] Starting service %s\n", utils.WiredoorServiceName)
 	err = utils.CreateServiceFromThisExecutable(utils.WiredoorServiceName, "", "")
 	if err != nil {
 		return fmt.Errorf("error instaling wiredoor service: %v", err)
@@ -46,7 +46,7 @@ func installService() error {
 	if err != nil {
 		return fmt.Errorf("error starting wiredoor service: %v", err)
 	}
-	fmt.Printf("[wiredoor] %s installed and started successfully.\n", utils.WiredoorServiceName)
+	utils.Terminal().Printf("[wiredoor] %s installed and started successfully.\n", utils.WiredoorServiceName)
 	return nil
 }
 
@@ -56,18 +56,19 @@ var installCmd = &cobra.Command{
 	Short:  "Install as service on Windows",
 	Long:   `Internal use, for installer or installation repair.`,
 	Example: `
-  # Install this executable as service for IPC
-  wiredoor install`,
+  # Install this executable as service for IPC:
+  	wiredoor install`,
 	Run: func(cmd *cobra.Command, args []string) {
 		//generate a capable user for run service, remove
 
 		// try install
+		utils.Terminal().StartProgress(fmt.Sprintf("Installing as service..."))
+		defer utils.Terminal().StopProgress()
 		if err := installService(); err != nil {
-			fmt.Printf("Installation error: %v\n", err)
+			utils.Terminal().Errorf("Installation error: %v\n", err)
 		} else {
-			fmt.Printf("Service installed...\n")
+			utils.Terminal().Printf("Service installed...\n")
 		}
-
 	},
 }
 

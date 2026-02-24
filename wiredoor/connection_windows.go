@@ -87,7 +87,7 @@ func ConnectApi(connection ConnectionConfig) error {
 
 func Connect(connection ConnectionConfig) {
 	if err := ConnectApi(connection); err != nil {
-		fmt.Printf("Connection error: %v", err)
+		utils.Terminal().Printf("Connection error: %v", err)
 		//!!!! DO NOT KILL SERVICE
 		//===================================
 		isSvc, err := svc.IsWindowsService()

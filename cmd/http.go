@@ -4,9 +4,8 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
 )
 
@@ -83,10 +82,11 @@ Certificates:
 		node := wiredoor.GetNode()
 
 		if node.IsGateway && backendHost == "" {
-			fmt.Println("You must define --backendHost when your node is a gateway")
+			utils.Terminal().Hint("You must define --backendHost when your node is a gateway")
 			return
 		}
-
+		utils.Terminal().StartProgress("Working on enable HTTP service...")
+		defer utils.Terminal().StopProgress()
 		wiredoor.ExposeHTTP(wiredoor.HttpServiceParams{
 			Name:         name,
 			Domain:       domain,

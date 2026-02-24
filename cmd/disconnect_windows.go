@@ -41,16 +41,18 @@ Examples:
 
 		isWindowsService, err := svc.IsWindowsService()
 		if err != nil {
-			fmt.Printf("Wiredoor service detection error: %v\n", err)
-			slog.Error(fmt.Sprintf("Service detection error, %v\n", err))
+			utils.Terminal().Printf("Wiredoor service detection error: %v\n", err)
+			slog.Error("Service detection error", "error", err)
 			os.Exit(1)
 		}
 		if isWindowsService {
-			slog.Error("error, connect command not usable as service")
+			slog.Error("error, disconnect command not usable as service")
 			os.Exit(1)
 		}
 
 		//2 send disconnect message
+		utils.Terminal().StartProgress("Disconnecting...")
+		defer utils.Terminal().StopProgress()
 
 		//prepare data to send:
 		jsonToSend := make(map[string]interface{})
@@ -62,25 +64,25 @@ Examples:
 				if response, ok := jsonResponse["response"].(string); ok {
 					switch response {
 					case "ok":
-						fmt.Printf("Disconnected successfully.\n")
+						utils.Terminal().Printf("Disconnected successfully.\n")
 						os.Exit(0)
 					default:
-						fmt.Printf("Fail due to unhandled service response: %v\n", response)
+						utils.Terminal().Printf("Fail due to unhandled service response: %v\n", response)
 						slog.Error(fmt.Sprintf("unhandled service response: %v", response))
 						os.Exit(1)
 					}
 				} else {
-					fmt.Printf("Fail due to service response format: %v\n", string(resp))
+					utils.Terminal().Printf("Fail due to service response format: %v\n", string(resp))
 					slog.Error(fmt.Sprintf("response format error: %v", resp))
 					os.Exit(1)
 				}
 			} else {
-				fmt.Printf("Fail due to service response format: %v\n", string(resp))
+				utils.Terminal().Printf("Fail due to service response format: %v\n", string(resp))
 				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}
 		} else {
-			fmt.Printf("Service communication error: %v\n", err)
+			utils.Terminal().Printf("Service communication error: %v\n", err)
 			slog.Error(fmt.Sprintf("Service communication error: %v", err))
 			os.Exit(1)
 		}

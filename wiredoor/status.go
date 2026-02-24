@@ -79,7 +79,7 @@ func CheckWiredoorServer(debug bool) bool {
 }
 
 func printNodeInfoDetails(node NodeInfo) {
-	fmt.Println("")
+	utils.Terminal().Println("")
 	if node.IsGateway {
 		if node.GatewayNetwork != "" && len(node.GatewayNetworks) == 0 {
 			utils.Terminal().Printf("Using legacy gatewayNetwork field. Consider updating your Wiredoor Server.")
@@ -103,11 +103,11 @@ func printNodeInfoDetails(node NodeInfo) {
 	} else {
 		utils.Terminal().KV("Node", fmt.Sprintf("%s (%s)", node.Name, node.Address))
 	}
-	fmt.Println("")
+	utils.Terminal().Println("")
 	utils.Terminal().KV("Handshake", formatRelativeTime(node.LatestHandshakeTimestamp))
 	utils.Terminal().KV("TX", formatBytes(node.TransferTx))
 	utils.Terminal().KV("RX", formatBytes(node.TransferRx))
-	fmt.Println("")
+	utils.Terminal().Println("")
 	if len(node.HttpServices) > 0 || len(node.TcpServices) > 0 {
 		utils.Terminal().Section("Services:")
 		PrintHttpServices(node.HttpServices, node.IsGateway)

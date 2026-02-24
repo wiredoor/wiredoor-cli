@@ -48,7 +48,7 @@ Prompts will guide you through the registration and configuration process.`,
 		url, _ := cmd.Flags().GetString("url")
 
 		if url == "" && !wiredoor.IsServerConfigSet() {
-			fmt.Println("You must define Wiredoor server URL. Please use flag --url and try again.")
+			utils.Terminal().Hint("You must define Wiredoor server URL. Please use flag --url and try again.")
 			return
 		}
 
@@ -83,8 +83,8 @@ Prompts will guide you through the registration and configuration process.`,
 		token, err := wiredoor.AdminLogin(url, username, password)
 
 		if err != nil {
-			printErrorAndExit(err, 1)
-			return
+			utils.Terminal().Errorf("%v", err)
+			os.Exit(1)
 		}
 
 		survey.AskOne(&survey.Input{
@@ -129,24 +129,27 @@ Prompts will guide you through the registration and configuration process.`,
 		})
 
 		if err != nil {
-			printErrorAndExit(err, 1)
-			return
+			utils.Terminal().Errorf("%v", err)
+			os.Exit(1)
 		}
 
-		fmt.Printf("Node %s registered successfully!\n", node.Name)
+		utils.Terminal().Printf("Node %s registered successfully!\n", node.Name)
 
 		//Service IPC
 		// wiredoor.Connect(wiredoor.ConnectionConfig{})
+		utils.Terminal().StartProgress("Connecting...")
+		defer utils.Terminal().StopProgress()
+
 		isWindowsService, err := svc.IsWindowsService()
 		if err != nil {
 
-			fmt.Printf("error detecting if I am a service, %v\n", err)
+			utils.Terminal().Errorf("to detect if running as service, %v\n", err)
 			slog.Error(fmt.Sprintf("error detecting if I am a service, %v\n", err))
 			os.Exit(1)
 		}
 		if isWindowsService {
-			fmt.Print("error, connect command not usable as service")
-			slog.Error("error, connect command not usable as service")
+			utils.Terminal().Errorf("login command not usable as service")
+			slog.Error("error, login command not usable as service")
 			os.Exit(1)
 		}
 
@@ -162,21 +165,22 @@ Prompts will guide you through the registration and configuration process.`,
 						wiredoor.Status()
 						os.Exit(0)
 					default:
-						fmt.Printf("Fail due to unhandled service reposnse: %v", response)
+						utils.Terminal().Warnf("Unhandled service reposnse: %v", response)
 						slog.Error(fmt.Sprintf("unhandled service reposnse: %v", response))
 						os.Exit(1)
 					}
 				} else {
-					fmt.Printf("Fail due to service reposnse format: %v", string(resp))
+					utils.Terminal().Errorf("Bad service reposnse format: %v", string(resp))
 					slog.Error(fmt.Sprintf("response format error: %v", resp))
 					os.Exit(1)
 				}
 			} else {
-				fmt.Printf("Fail due to service reposnse format: %v", string(resp))
+				utils.Terminal().Errorf("Bad service reposnse format: %v", string(resp))
 				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}
 		} else {
+			utils.Terminal().Errorf("Service comunication error: %v", err)
 			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
 			os.Exit(1)
 		}
@@ -187,9 +191,4 @@ func init() {
 	rootCmd.AddCommand(loginCmd)
 
 	loginCmd.Flags().String("url", "", "URL Domain or Server IP of Wiredoor instance")
-}
-
-func printErrorAndExit(err error, code int) {
-	fmt.Fprintln(os.Stderr, "Error:", err)
-	os.Exit(code)
 }

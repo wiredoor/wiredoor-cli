@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
 )
 
@@ -43,14 +44,17 @@ Afterwards, simply run:
   # Then connect when ready
   wiredoor connect`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Saving Wiredoor config to", server)
+		// utils.Terminal().Println("Saving Wiredoor config to", server)
+
+		utils.Terminal().StartProgress(fmt.Sprintf("Saving Wiredoor config to %s", server))
+		defer utils.Terminal().StopProgress()
 
 		err := wiredoor.SaveServerConfig(server, token)
 		if err != nil {
-			fmt.Printf("unable to save config file: %v", err)
+			utils.Terminal().Errorf("unable to save config file: %v", err)
 			return
 		}
-		fmt.Println("✅ Configuration saved to " + wiredoor.GetConfigLocation())
+		utils.Terminal().Println("Configuration saved to " + wiredoor.GetConfigLocation())
 	},
 }
 

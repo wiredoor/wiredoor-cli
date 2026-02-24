@@ -4,30 +4,46 @@
 package utils
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 
+	"github.com/wiredoor/wiredoor-cli/version"
 	"golang.org/x/sys/windows/svc"
 )
 
-func init() {
+/*
+	type LogWritter struct {
+		// to use as io.Writter
+		level string
+		l     *slog.Logger
+	}
 
+	func (l *LogWritter) Write(p []byte) (n int, err error) {
+		if l != nil {
+
+		}
+		return len(p), nil
+	}
+
+var WarnLogWtitter = LogWritter{level: "warn", l: slog.Default()}
+var ErrorLogWritter = LogWritter{level: "error", l: slog.Default()}
+var InfoLogWritter = LogWritter{level: "info", l: slog.Default()}
+*/
+func init() {
 	//logs
 	isSvc, err := svc.IsWindowsService()
 	if err != nil {
 		isSvc = false
-		fmt.Printf("Determine execution service context error: %v\n", err)
+		Terminal().Printf("Determine execution service context error: %v\n", err)
 	}
 	var logger *Logger
 
-	version := "0.9-alpha_windows"
 	if isSvc {
 		logger, err = New(LoggingOptions{
 			File:       os.Getenv("PROGRAMDATA") + "\\wiredoor\\WiredoorServiceLog.json",
 			Level:      slog.LevelDebug,
 			AppName:    "Wiredoor Service",
-			AppVersion: version,
+			AppVersion: version.Version,
 			AddSource:  true,
 		})
 	} else {
@@ -35,7 +51,7 @@ func init() {
 			File:       os.Getenv("LOCALAPPDATA") + "\\wiredoor\\WiredoorUserLog.json",
 			Level:      slog.LevelDebug,
 			AppName:    "Wiredoor User App",
-			AppVersion: version,
+			AppVersion: version.Version,
 			AddSource:  true,
 		})
 	}
@@ -43,10 +59,13 @@ func init() {
 	if err == nil {
 		if logger != nil {
 			slog.SetDefault(logger.L)
+			// ErrorLogWritter.l = logger.L
+			// WarnLogWtitter.l = logger.L
+			// InfoLogWritter.l = logger.L
 		} else {
-			fmt.Printf("nil logger, using stdout")
+			Terminal().Errorf("nil logger, using stdout")
 		}
 	} else {
-		fmt.Printf("log initialization error %v", err)
+		Terminal().Errorf("log initialization error %v", err)
 	}
 }

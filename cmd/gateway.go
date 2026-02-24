@@ -40,7 +40,7 @@ Note:
   wiredoor gateway --subnet=10.42.0.0/16`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if runtime.GOOS == "windows" {
-			fmt.Println("unsupported OS")
+			utils.Terminal().Println("unsupported OS")
 			return
 		}
 		if gatewaySubnet == "" {
@@ -53,11 +53,13 @@ Note:
 		}
 
 		if _, _, err := net.ParseCIDR(gatewaySubnet); err != nil {
-			fmt.Printf("Invalid subnet format: %s\n", gatewaySubnet)
+			utils.Terminal().Errorf("Invalid subnet format: %s\n", gatewaySubnet)
 			return
 		}
 
-		fmt.Printf("Updating gateway subnet to '%s' using interface '%s'...\n", gatewaySubnet, gatewayInterface)
+		// utils.Terminal().Printf("Updating gateway subnet to '%s' using interface '%s'...\n", gatewaySubnet, gatewayInterface)
+		utils.Terminal().StartProgress(fmt.Sprintf("Updating gateway subnet to '%s' using interface '%s'...\n", gatewaySubnet, gatewayInterface))
+		defer utils.Terminal().StopProgress()
 
 		wiredoor.UpdateGatewaySubnet(wiredoor.GatewayNetwork{Interface: gatewayInterface, Subnet: gatewaySubnet})
 	},

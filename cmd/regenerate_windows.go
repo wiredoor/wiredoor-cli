@@ -64,15 +64,21 @@ Examples:
 		}
 		isWindowsService, err := svc.IsWindowsService()
 		if err != nil {
-			fmt.Printf("error detecting if I am a service, %v\n", err)
+
+			utils.Terminal().Errorf("to detect if running as service, %v\n", err)
+			slog.Error(fmt.Sprintf("error detecting if I am a service, %v\n", err))
 			os.Exit(1)
 		}
 		if isWindowsService {
-			slog.Error("error, connect command not usable as service")
+			utils.Terminal().Errorf("regenerate command not usable as service")
+			slog.Error("error, regenerate command not usable as service")
 			os.Exit(1)
 		}
 
 		//2 send disconnect message
+
+		utils.Terminal().StartProgress("Executing regenerate...")
+		defer utils.Terminal().StopProgress()
 
 		//prepare data to send:
 		jsonToSend := make(map[string]interface{})
@@ -87,22 +93,22 @@ Examples:
 						wiredoor.Status()
 						os.Exit(0)
 					default:
-						fmt.Printf("Fail due to unhandled service reposnse: %v\n", response)
+						utils.Terminal().Errorf("Fail due to unhandled service reposnse: %v\n", response)
 						slog.Error(fmt.Sprintf("unhandled service reposnse: %v", response))
 						os.Exit(1)
 					}
 				} else {
-					fmt.Printf("Fail due to service reposnse format: %v\n", string(resp))
+					utils.Terminal().Errorf("Fail due to service reposnse format: %v\n", string(resp))
 					slog.Error(fmt.Sprintf("response format error: %v", resp))
 					os.Exit(1)
 				}
 			} else {
-				fmt.Printf("Fail due to service reposnse format: %v\n", string(resp))
+				utils.Terminal().Errorf("Fail due to service reposnse format: %v\n", string(resp))
 				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}
 		} else {
-			fmt.Printf("Service comunication error: %v\n", err)
+			utils.Terminal().Errorf("Service comunication error: %v\n", err)
 			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
 			os.Exit(1)
 		}
