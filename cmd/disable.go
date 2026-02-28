@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/wiredoor/wiredoor-cli/utils"
@@ -45,9 +46,8 @@ Use 'wiredoor enable' to re-enable the service later.`,
 			return
 		}
 
-		// utils.Terminal().Printf("Disabling %s service '%s'...\n", serviceType, serviceId)
+		utils.Terminal().StartProgress(fmt.Sprintf("Disabling %s service '%s'...\n", strings.ToUpper(serviceType), serviceId))
 
-		utils.Terminal().StartProgress(fmt.Sprintf("Disabling %s service '%s'...\n", serviceType, serviceId))
 		defer utils.Terminal().StopProgress()
 
 		wiredoor.DisableServiceByType(serviceType, serviceId)

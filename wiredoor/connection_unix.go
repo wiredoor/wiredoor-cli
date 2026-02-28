@@ -75,8 +75,8 @@ func Disconnect() {
 
 func ensureRoot() {
 	if os.Geteuid() != 0 {
-		utils.Terminal().Errorf("Permission denied: root privileges are required")
-		utils.Terminal().Hint("Try running with sudo or as root")
+		utils.Terminal().Errorf("Permission denied. This operation requires root privileges.")
+		utils.Terminal().Hint("Re-run the command with sudo.")
 		os.Exit(1)
 	}
 }
@@ -107,13 +107,13 @@ func manualLinuxConnect() {
 		os.Exit(1)
 	}
 
-	iface, err := getInterfaceName()
+	iface, err := parseInterfaceName()
 	if err != nil || iface == "" {
 		utils.Terminal().Errorf("Unable to determine the interface name after connecting")
 		os.Exit(1)
 	}
 
-	if err := os.MkdirAll("/var/run/wiredoor", 0o644); err != nil {
+	if err := os.MkdirAll("/var/run/wiredoor", 0o755); err != nil {
 		utils.Terminal().Errorf("Error creating Wiredoor runtime directory: %v", err)
 		os.Exit(1)
 	}
@@ -164,7 +164,7 @@ func ExistWireguardConfigFile() bool {
 	return err == nil
 }
 
-func getInterfaceName() (string, error) {
+func parseInterfaceName() (string, error) {
 	if runtime.GOOS == "linux" {
 		return utils.TunnelName, nil
 	}
@@ -194,13 +194,16 @@ func getInterfaceName() (string, error) {
 	return "", fmt.Errorf("wg dump: no lines found")
 }
 
-func interfaceExists() bool {
+func getInterfaceName() string {
 	iface, err := os.ReadFile("/var/run/wiredoor/" + utils.TunnelName + "-interface")
 	if err != nil || len(iface) == 0 {
-		return false
+		return ""
 	}
+	return strings.TrimSpace(string(iface))
+}
 
-	ifaceName := strings.TrimSpace(string(iface))
+func interfaceExists() bool {
+	ifaceName := getInterfaceName()
 	if ifaceName == "" {
 		return false
 	}
