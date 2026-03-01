@@ -111,8 +111,8 @@ Examples:
 			}
 		} else {
 			utils.Terminal().StopProgress()
-			utils.Terminal().Errorf("Service comunication error: %v\n", err)
-			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
+			utils.Terminal().Errorf("Service communication error: %v\n", err)
+			slog.Error(fmt.Sprintf("Service communication error: %v", err))
 			os.Exit(1)
 		}
 
