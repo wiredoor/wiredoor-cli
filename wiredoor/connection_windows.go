@@ -252,6 +252,10 @@ func manualWindowsDisconnect() {
 	}
 }
 
+func getInterfaceName() string {
+	return utils.TunnelName
+}
+
 func ExistWireguardConfigFile() bool {
 	// log.Printf("Wireguard cfg: %s", wireguardConfigFolder+configFilename)
 	_, err := os.Stat(wireguardConfigFolder + configFilename)
