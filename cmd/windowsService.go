@@ -42,6 +42,81 @@ command format:
 
 `
 */
+//!!! IPC PROTOCOL HERE
+func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
+	var incomingJson interface{}
+	if err := json.Unmarshal(data, &incomingJson); err == nil {
+		if jsonObject, ok := incomingJson.(map[string]interface{}); ok {
+			if commandStr, ok := jsonObject["command"].(string); ok {
+				switch commandStr {
+				case "connect":
+					url, ok := jsonObject["url"].(string)
+					if !ok {
+						url = ""
+					}
+					token, ok := jsonObject["token"].(string)
+					if !ok {
+						token = ""
+					}
+					if !wiredoor.WireguardInterfaceExists() {
+						err := wiredoor.ConnectApi(
+							wiredoor.ConnectionConfig{
+								URL:       url,
+								Token:     token,
+								UseDaemon: true,
+								SetDaemon: false})
+						if err != nil {
+							slog.Error(fmt.Sprintf("[%s connect] %v", utils.WiredoorServiceName, err))
+							sendResponse(fmt.Sprintf("[%s connect] %v", utils.WiredoorServiceName, err), wiredoorPipeHandle)
+						} else {
+							sendResponse("ok", wiredoorPipeHandle)
+						}
+					} else {
+						slog.Error(fmt.Sprintf("Ignored connect: Wireguard Interface Exists"))
+						sendResponse("Already Connected", wiredoorPipeHandle)
+					}
+				case "disconnect":
+					wiredoor.Disconnect()
+					//response
+					sendResponse("ok", wiredoorPipeHandle)
+				case "regenerate":
+					wiredoor.Disconnect()
+					if err := wiredoor.RegenerateKeys(); err != nil {
+						sendResponse(fmt.Sprintf("SERVICE DOWN:Regenerate error: %v", err), wiredoorPipeHandle)
+					} else {
+						sendResponse("ok", wiredoorPipeHandle)
+					}
+				case "config":
+					url, ok := jsonObject["url"].(string)
+					if !ok {
+						url = ""
+					}
+					token, ok := jsonObject["token"].(string)
+					if !ok {
+						token = ""
+					}
+					err := wiredoor.SaveServerConfig(url, token)
+					if err != nil {
+						slog.Error(fmt.Sprintf("[%s config] %v", utils.WiredoorServiceName, err))
+						sendResponse(fmt.Sprintf("%v", err.Error()), wiredoorPipeHandle)
+					} else {
+						sendResponse("Configuration saved to "+wiredoor.GetConfigLocation(), wiredoorPipeHandle)
+					}
+				default:
+					slog.Error(fmt.Sprintf("invalid command : %v", commandStr))
+					sendResponse(fmt.Sprintf("invalid command : %v", commandStr), wiredoorPipeHandle)
+				}
+			} else {
+				slog.Error(fmt.Sprintf("invalid command type: %v", string(data)))
+				sendResponse(fmt.Sprintf("invalid command type: %v", string(data)), wiredoorPipeHandle)
+			}
+		}
+
+	} else {
+		slog.Error(fmt.Sprintf("error on json decoding `data section(`%s`)` : %v", string(data), err))
+		sendResponse(fmt.Sprintf("error on json decoding `data section(`%s`)` : %v", string(data), err), wiredoorPipeHandle)
+	}
+}
 
 func createWindowsSecurityDescriptor() (sd *windows.SECURITY_DESCRIPTOR, err error) {
 	// windows.LookupSID()
@@ -100,65 +175,7 @@ func createWindowsSecurityDescriptor() (sd *windows.SECURITY_DESCRIPTOR, err err
 	return securityDescriptor, nil
 
 }
-func manageIncomingData(data []byte, wiredoorPipeHandle windows.Handle) {
-	var incomingJson interface{}
-	if err := json.Unmarshal(data, &incomingJson); err == nil {
-		if jsonObject, ok := incomingJson.(map[string]interface{}); ok {
-			if commandStr, ok := jsonObject["command"].(string); ok {
-				switch commandStr {
-				case "connect":
-					url, ok := jsonObject["url"].(string)
-					if !ok {
-						url = ""
-					}
-					token, ok := jsonObject["token"].(string)
-					if !ok {
-						token = ""
-					}
-					if !wiredoor.WireguardInterfaceExists() {
-						err := wiredoor.ConnectApi(
-							wiredoor.ConnectionConfig{
-								URL:       url,
-								Token:     token,
-								UseDaemon: true,
-								SetDaemon: false})
-						if err != nil {
-							slog.Error(fmt.Sprintf("[%s connect] %v", utils.WiredoorServiceName, err))
-							sendResponse(fmt.Sprintf("[%s connect] %v", utils.WiredoorServiceName, err), wiredoorPipeHandle)
-						} else {
-							sendResponse("ok", wiredoorPipeHandle)
-						}
-					} else {
-						slog.Error(fmt.Sprintf("Ignored connect: Wireguard Interface Exists"))
-						sendResponse("Already Connected", wiredoorPipeHandle)
-					}
-				case "disconnect":
-					wiredoor.Disconnect()
-					//response
-					sendResponse("ok", wiredoorPipeHandle)
 
-				case "regenerate":
-					wiredoor.Disconnect()
-					if err := wiredoor.RegenerateKeys(); err != nil {
-						sendResponse(fmt.Sprintf("SERVICE DOWN:Regenerate error: %v", err), wiredoorPipeHandle)
-					} else {
-						sendResponse("ok", wiredoorPipeHandle)
-					}
-				default:
-					slog.Error(fmt.Sprintf("invalid command : %v", commandStr))
-					sendResponse(fmt.Sprintf("invalid command : %v", commandStr), wiredoorPipeHandle)
-				}
-			} else {
-				slog.Error(fmt.Sprintf("invalid command type: %v", string(data)))
-				sendResponse(fmt.Sprintf("invalid command type: %v", string(data)), wiredoorPipeHandle)
-			}
-		}
-
-	} else {
-		slog.Error(fmt.Sprintf("error on json decoding `data section(`%s`)` : %v", string(data), err))
-		sendResponse(fmt.Sprintf("error on json decoding `data section(`%s`)` : %v", string(data), err), wiredoorPipeHandle)
-	}
-}
 func sendResponse(message string, pipeHandle windows.Handle) error {
 	jsonToSend := make(map[string]interface{})
 	jsonToSend["response"] = message
