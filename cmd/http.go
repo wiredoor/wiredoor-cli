@@ -85,7 +85,7 @@ Certificates:
 			utils.Terminal().Hint("You must define --backendHost when your node is a gateway")
 			return
 		}
-		utils.Terminal().StartProgress("Working on enable HTTP service...")
+		utils.Terminal().StartProgress("Configuring HTTP service...")
 		defer utils.Terminal().StopProgress()
 		wiredoor.ExposeHTTP(wiredoor.HttpServiceParams{
 			Name:         name,

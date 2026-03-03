@@ -384,8 +384,8 @@ func ExposeHTTP(service HttpServiceParams, node NodeInfo) {
 			utils.Terminal().Errorf("Unable to expose HTTP service: %v", err)
 			return
 		}
-
-		utils.Terminal().Section("New Service Available")
+		utils.Terminal().FinalizeProgress()
+		utils.Terminal().Section("HTTP Service Available")
 
 		PrintHttpServices([]HttpService{createdService}, node.IsGateway)
 	}
@@ -406,7 +406,8 @@ func ExposeTCP(service TcpServiceParams, node NodeInfo) {
 			return
 		}
 
-		utils.Terminal().Section("New Service Available")
+		utils.Terminal().FinalizeProgress()
+		utils.Terminal().Section(strings.ToUpper(createdService.Proto) + " Service Available")
 
 		PrintTcpServices([]TcpService{createdService}, node.IsGateway)
 	}
@@ -416,6 +417,7 @@ func DisableServiceByType(serviceType string, id string) {
 	resp := requestApi(apiRequest{Method: "PATCH", Path: "/cli/services/" + serviceType + "/" + id + "/disable"})
 
 	if resp != nil {
+		utils.Terminal().FinalizeProgress()
 		if serviceType == "http" {
 			service := HttpService{}
 
@@ -455,6 +457,7 @@ func EnableServiceByType(params EnableRequest) {
 	resp := requestApi(apiRequest{Method: "PATCH", Path: "/cli/services/" + params.ServiceType + "/" + params.ID + "/enable", Body: body})
 
 	if resp != nil {
+		utils.Terminal().FinalizeProgress()
 		if params.ServiceType == "http" {
 			service := HttpService{}
 

@@ -50,9 +50,9 @@ type Config struct {
 func GetConfigLocation() string {
 	currentOS := runtime.GOOS
 	switch currentOS {
-	case `windows`:
+	case "windows":
 		return os.Getenv("PROGRAMDATA") + "\\wiredoor\\config.ini"
-	case `linux`:
+	case "linux":
 		return "/etc/wiredoor/config.ini"
 	default:
 		return "/etc/wiredoor/config.ini"

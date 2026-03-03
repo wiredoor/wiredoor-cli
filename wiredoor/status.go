@@ -64,7 +64,7 @@ func WireguardInterfaceExists() bool {
 }
 
 func CheckWiredoorServer(debug bool) bool {
-	ip := utils.LocalServerIP()
+	ip := utils.LocalServerIP(getInterfaceName())
 
 	if !utils.CheckPort(ip, 443) {
 		return false

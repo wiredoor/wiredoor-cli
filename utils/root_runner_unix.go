@@ -17,7 +17,7 @@ func IsRoot() bool {
 func RelaunchAsRoot() error {
 
 	if os.Geteuid() != 0 {
-		return errors.New("Permission denied: root privileges are required (try with sudo)")
+		return errors.New("Permission denied. This operation requires root privileges.")
 	}
 	//! verify how to launch with correct permissions
 	return nil

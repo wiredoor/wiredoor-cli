@@ -25,8 +25,11 @@ func CheckPort(host string, port int) bool {
 	return true
 }
 
-func LocalTunnelIP() string {
-	iface, err := net.InterfaceByName(TunnelName)
+func LocalTunnelIP(tunnel string) string {
+	if tunnel == "" {
+		tunnel = TunnelName
+	}
+	iface, err := net.InterfaceByName(tunnel)
 	if err != nil {
 		return ""
 	}
@@ -38,8 +41,11 @@ func LocalTunnelIP() string {
 	return ip.String()
 }
 
-func LocalServerIP() string {
-	iface, err := net.InterfaceByName(TunnelName)
+func LocalServerIP(tunnel string) string {
+	if tunnel == "" {
+		tunnel = TunnelName
+	}
+	iface, err := net.InterfaceByName(tunnel)
 	if err != nil {
 		return ""
 	}

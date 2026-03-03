@@ -4,6 +4,8 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"strings"
+
 	"github.com/spf13/cobra"
 	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
@@ -84,6 +86,9 @@ Examples:
 			utils.Terminal().Hint("You must define --backendHost when your node is a gateway")
 			return
 		}
+
+		utils.Terminal().StartProgress("Configuring " + strings.ToUpper(tcpProto) + " service...")
+		defer utils.Terminal().StopProgress()
 
 		wiredoor.ExposeTCP(wiredoor.TcpServiceParams{
 			Name:        name,

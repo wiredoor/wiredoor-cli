@@ -57,6 +57,7 @@ Afterwards, simply run:
 			utils.Terminal().Errorf("unable to save config file: %v", err)
 			return
 		}
+		utils.Terminal().FinalizeProgress()
 		utils.Terminal().Println("Configuration saved to " + wiredoor.GetConfigLocation())
 	},
 }
