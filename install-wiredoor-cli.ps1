@@ -8,7 +8,7 @@ $WgVERSION = '0.5.3'
 
 $InstallDir = Join-Path $env:LOCALAPPDATA 'Wiredoor\bin'
 $TempDir = Join-Path $env:TEMP 'Wiredoor-Install'
-$Arch = if ([Environment]::Is64BitOperatingSystem) { 'amd64' } else { '386' }
+$Arch = if ([Environment]::Is64BitOperatingSystem) { 'amd64' } else { '' }
 
 # Job artifacts base URL
 $ReleaseBaseUrl = 'https://github.com/wiredoor/wiredoor-cli/releases/download/latest'
