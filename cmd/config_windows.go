@@ -64,7 +64,7 @@ Afterwards, simply run:
 
 		jsonToSend := make(map[string]interface{})
 		jsonToSend["command"] = "config"
-		jsonToSend["server"] = server
+		jsonToSend["url"] = server
 		jsonToSend["token"] = token
 
 		utils.Terminal().StartProgress("Saving config...")
@@ -107,7 +107,7 @@ func init() {
 	configCmd.Flags().StringVar(&server, "url", "", "Wiredoor server URL (required)")
 	configCmd.Flags().StringVar(&token, "token", "", "Node authentication token (required)")
 
-	_ = configCmd.MarkFlagRequired("server")
+	_ = configCmd.MarkFlagRequired("url")
 	_ = configCmd.MarkFlagRequired("token")
 
 	rootCmd.Flags().SortFlags = false
