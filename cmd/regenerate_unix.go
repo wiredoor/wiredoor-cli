@@ -1,11 +1,16 @@
+//go:build !windows
+// +build !windows
+
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 */
+
 package cmd
 
 import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
 )
 
@@ -54,7 +59,10 @@ Examples:
 
 		wiredoor.Disconnect()
 
-		wiredoor.RegenerateKeys()
+		err := wiredoor.RegenerateKeys()
+		if err != nil {
+			utils.Terminal().Errorf("Regenerate: %v", err)
+		}
 	},
 }
 

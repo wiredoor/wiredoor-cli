@@ -1,10 +1,10 @@
 --name "wiredoor"
---description "Ingress as a service system CLI"
---after-install pkg/postinstall.sh
---before-remove pkg/preuninstall.sh
+--description "CLI for interacting with Wiredoor servers. It allows operators to securely connect nodes, expose HTTP and TCP services, manage gateways, and monitor runtime status from local or remote environments."
+--after-install build/linux/postinstall.sh
+--before-remove build/linux/preuninstall.sh
 --config-files /etc/wiredoor/config.ini
---license "MIT"
+--license "Apache-2.0"
 --url "https://www.wiredoor.net"
 --maintainer "Daniel Mesa <dmesa@wiredoor.net>"
 --vendor "Wiredoor"
-etc/wiredoor/config.ini.example=/etc/wiredoor/config.ini
+build/linux/etc/wiredoor/config.ini.example=/etc/wiredoor/config.ini

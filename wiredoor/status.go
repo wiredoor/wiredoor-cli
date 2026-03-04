@@ -3,7 +3,6 @@ package wiredoor
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/wiredoor/wiredoor-cli/utils"
@@ -11,14 +10,14 @@ import (
 
 func Status() {
 	if !WireguardInterfaceExists() {
-		fmt.Println("❌ WireGuard interface 'wg0' is not active.")
-		fmt.Println("Run 'wiredoor connect' to establish the tunnel.")
+		utils.Terminal().Errorf("Wireguard interface %s is not active.", utils.TunnelName)
+		utils.Terminal().Hint("Run 'wiredoor connect' to establish the tunnel.")
 		return
 	}
 
 	if !CheckWiredoorServer(true) {
-		fmt.Println("❌ Tunnel seems active, but Wiredoor server unreachable.")
-		fmt.Println("Try running 'wiredoor connect' again or check server availability.")
+		utils.Terminal().Errorf("Tunnel seems active, but Wiredoor server unreachable.")
+		utils.Terminal().Hint("Try running 'wiredoor connect' again or check server availability.")
 		return
 	}
 
@@ -30,7 +29,7 @@ func Status() {
 
 func Health() {
 	if !WireguardInterfaceExists() {
-		fmt.Println("❌ WireGuard interface 'wg0' is not active.")
+		utils.Terminal().Errorf("WireGuard interface " + utils.TunnelName + " is not active.")
 		os.Exit(1)
 		return
 	}
@@ -42,6 +41,7 @@ func Health() {
 }
 
 func WatchHealt() {
+	// log.Println("WatchHealt")
 	if ExistWireguardConfigFile() {
 		if !WireguardInterfaceExists() {
 			node := GetNode()
@@ -59,61 +59,62 @@ func WatchHealt() {
 }
 
 func WireguardInterfaceExists() bool {
-	cmd := exec.Command("ip", "link", "show", "wg0")
-	return cmd.Run() == nil
+	//OS implementation
+	return interfaceExists()
 }
 
 func CheckWiredoorServer(debug bool) bool {
-	ip := utils.LocalServerIP()
+	ip := utils.LocalServerIP(getInterfaceName())
 
 	if !utils.CheckPort(ip, 443) {
 		return false
 	} else {
 		if debug {
 			config := GetApiConfig()
-			fmt.Println(" ✔ Connection successful to:", config.VPN_HOST)
+			utils.Terminal().FinalizeProgress()
+			utils.Terminal().Section("Connection successful to: " + config.VPN_HOST)
 		}
 		return true
 	}
 }
 
 func printNodeInfoDetails(node NodeInfo) {
-	fmt.Println("")
+	utils.Terminal().Println("")
 	if node.IsGateway {
 		if node.GatewayNetwork != "" && len(node.GatewayNetworks) == 0 {
-			fmt.Println("⚠️ Using legacy gatewayNetwork field. Consider updating your Wiredoor Server.")
+			utils.Terminal().Printf("Using legacy gatewayNetwork field. Consider updating your Wiredoor Server.")
 
-			fmt.Printf("🛡️ Gateway: %s (%s) → 🌐 Subnet: %s\n", node.Name, node.Address, node.GatewayNetwork)
+			utils.Terminal().KV("Gateway", fmt.Sprintf("%s (%s)", node.Name, node.Address))
+			utils.Terminal().KV("Subnet", node.GatewayNetwork)
 		}
 		if len(node.GatewayNetworks) > 0 {
 			var entries []string
 			for _, net := range node.GatewayNetworks {
 				if !utils.InterfaceExists(net.Interface) {
-					fmt.Printf("⚠️ Interface \"%s\" does not exist on this system.\n", net.Interface)
+					utils.Terminal().Printf("⚠️ Interface \"%s\" does not exist on this system.\n", net.Interface)
 				}
 
 				entries = append(entries, fmt.Sprintf("%s: %s", net.Interface, net.Subnet))
 			}
 
-			fmt.Printf("🛡️ Gateway: %s (%s) → 🌐 Subnet: %s\n", node.Name, node.Address, entries)
+			utils.Terminal().KV("Gateway", fmt.Sprintf("%s (%s)", node.Name, node.Address))
+			utils.Terminal().KV("Subnet", entries)
 		}
 	} else {
-		fmt.Printf("🖥️  Node: %s (%s)\n", node.Name, node.Address)
+		utils.Terminal().KV("Node", fmt.Sprintf("%s (%s)", node.Name, node.Address))
 	}
-	fmt.Println("")
-	fmt.Printf("🔐 Handshake: %s | TX: %s | RX: %s\n",
-		formatRelativeTime(node.LatestHandshakeTimestamp),
-		formatBytes(node.TransferTx),
-		formatBytes(node.TransferRx),
-	)
-	fmt.Println("")
+	utils.Terminal().Println("")
+	utils.Terminal().KV("Handshake", formatRelativeTime(node.LatestHandshakeTimestamp))
+	utils.Terminal().KV("TX", formatBytes(node.TransferTx))
+	utils.Terminal().KV("RX", formatBytes(node.TransferRx))
+	utils.Terminal().Println("")
 	if len(node.HttpServices) > 0 || len(node.TcpServices) > 0 {
-		fmt.Println("🌐 Services:")
+		utils.Terminal().Section("Services:")
 		PrintHttpServices(node.HttpServices, node.IsGateway)
 		PrintTcpServices(node.TcpServices, node.IsGateway)
 	} else {
-		fmt.Println("🌐 No services exposed yet.")
-		fmt.Println("👉 Use 'wiredoor http' or 'wiredoor tcp' to expose a service.")
+		utils.Terminal().Section("No services exposed yet.")
+		utils.Terminal().Hint("Use 'wiredoor http' or 'wiredoor tcp' to expose a service.")
 	}
 }
 

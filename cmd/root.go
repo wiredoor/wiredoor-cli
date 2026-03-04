@@ -4,11 +4,11 @@ Copyright © 2024 infladoor - <support@infladoor.com>
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/version"
 )
 
@@ -19,8 +19,10 @@ var rootCmd = &cobra.Command{
 	Use:   "wiredoor",
 	Short: "Wiredoor CLI - Ingress as a service",
 	Long:  "Wiredoor CLI allows you to connect, expose, and manage nodes and services securely with Wiredoor Server.",
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		utils.InitConsole(utils.ConsoleOptions{})
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		hasFlags := false
 		cmd.Flags().Visit(func(f *pflag.Flag) {
@@ -32,7 +34,7 @@ var rootCmd = &cobra.Command{
 			return
 		}
 		if showVersion {
-			fmt.Printf("Wiredoor CLI version: %s\n", version.Version)
+			utils.Terminal().Printf("Wiredoor CLI version: %s\n", version.Version)
 			os.Exit(0)
 		}
 	},
@@ -53,4 +55,8 @@ func init() {
 	// will be global for your application.
 	rootCmd.Root().CompletionOptions.DisableDefaultCmd = true
 	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "Show Wiredoor CLI version")
+}
+
+func RootCmd() *cobra.Command {
+	return rootCmd
 }

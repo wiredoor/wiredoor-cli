@@ -1,9 +1,11 @@
 .gitlab-ci.yml
 bin
 dist
-etc/wiredoor/config.ini
+**/config.ini
 *.deb
 *.apk
 *.rpm
 *.pkg
 *.exe
+*.syso
+.DS_store

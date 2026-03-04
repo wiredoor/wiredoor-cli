@@ -5,8 +5,10 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
 )
 
@@ -46,12 +48,15 @@ Note:
 		serviceId := args[1]
 
 		if serviceType != "http" && serviceType != "tcp" {
-			fmt.Println("❌ Invalid service type. Must be 'http' or 'tcp'.")
+			utils.Terminal().Println("Invalid service type. Must be 'http' or 'tcp'.")
 			return
 		}
-		fmt.Printf("Enabling %s service '%s'...\n", serviceType, serviceId)
+		// utils.Terminal().Printf("Enabling %s service '%s'...\n", serviceType, serviceId)
 
-		wiredoor.EnableServiceByType(wiredoor.EnableRequest{ ServiceType: serviceType, ID: serviceId, Ttl: enableTtl })
+		utils.Terminal().StartProgress(fmt.Sprintf("Enabling %s service '%s'...\n", strings.ToUpper(serviceType), serviceId))
+		defer utils.Terminal().StopProgress()
+
+		wiredoor.EnableServiceByType(wiredoor.EnableRequest{ServiceType: serviceType, ID: serviceId, Ttl: enableTtl})
 	},
 }
 

@@ -24,7 +24,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.23
+          go-version: 1.25
 
       - name: Get version from tag
         id: version
@@ -33,7 +33,7 @@ jobs:
       - name: Install FPM dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ruby ruby-dev build-essential rpm make libarchive-tools zstd
+          sudo apt-get install -y ruby ruby-dev build-essential rpm make libarchive-tools zstd curl librsvg2-bin gettext-base
           sudo gem install --no-document fpm
 
       - name: Package .deb and .rpm
@@ -49,6 +49,8 @@ jobs:
             dist/*.rpm
             dist/*.apk
             dist/*.pkg.tar.zst
+            dist/*.exe
+            dist/*.tar.gz
 
   build-image:
     name: Build Gateway Image

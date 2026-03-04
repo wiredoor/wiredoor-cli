@@ -1,15 +1,17 @@
 package wiredoor
 
 import (
-	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
+	"github.com/wiredoor/wiredoor-cli/utils"
 	"gopkg.in/ini.v1"
 )
 
-var configFile = "/etc/wiredoor/config.ini"
+// !TODO search for dependencies on var configFile
+var configFile = GetConfigLocation()
 
 var defaultConfig = map[string]map[string]string{
 	"server": {
@@ -45,24 +47,37 @@ type Config struct {
 	Daemon DaemonConfig
 }
 
-func SaveServerConfig(server string, token string) {
+func GetConfigLocation() string {
+	currentOS := runtime.GOOS
+	switch currentOS {
+	case "windows":
+		return os.Getenv("PROGRAMDATA") + "\\wiredoor\\config.ini"
+	case "linux":
+		return "/etc/wiredoor/config.ini"
+	default:
+		return "/etc/wiredoor/config.ini"
+	}
+}
+
+func SaveServerConfig(server string, token string) error {
 	cfg, err := getIniFile()
 
 	if err != nil {
-		log.Fatalf("Unable to get configuration file: %v", err)
+		utils.Terminal().Errorf("Unable to get configuration file: %v", err)
+		return err
 	}
 
 	cfg.Section("server").Key("url").SetValue(server)
 	cfg.Section("server").Key("token").SetValue(token)
 
-	cfg.SaveTo(configFile)
+	return cfg.SaveTo(configFile)
 }
 
 func SaveDaemonConfig(useDaemon bool) {
 	cfg, err := getIniFile()
 
 	if err != nil {
-		log.Fatalf("Unable to get configuration file: %v", err)
+		utils.Terminal().Errorf("Unable to get configuration file: %v", err)
 	}
 	cfg.Section("daemon").Key("enabled").SetValue(boolToString(useDaemon))
 
@@ -85,7 +100,7 @@ func getConfig() Config {
 	cfg, err := getIniFile()
 
 	if err != nil {
-		log.Fatalf("Unable to get configuration file: %v", err)
+		utils.Terminal().Errorf("Unable to get configuration file: %v", err)
 	}
 
 	return Config{

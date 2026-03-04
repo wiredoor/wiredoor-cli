@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN apk add --update iptables wireguard-tools tcpdump dnsmasq iproute2 libcap su
   && addgroup -g 1000 wiredoor \
   && adduser -S -u 1000 -G wiredoor -H -s /sbin/nologin wiredoor
 
-COPY --chown=wiredoor:wiredoor /etc/wiredoor/config.ini.example /etc/wiredoor/config.ini
+COPY --chown=wiredoor:wiredoor build/linux/etc/wiredoor/config.ini.example /etc/wiredoor/config.ini
 
 COPY connect-wiredoor /usr/bin/connect-wiredoor
 

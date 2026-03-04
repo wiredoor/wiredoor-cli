@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"net"
+	"runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/wiredoor/wiredoor-cli/utils"
@@ -38,23 +39,29 @@ Note:
 	Example: `  # Update the gateway subnet to match a Kubernetes service network
   wiredoor gateway --subnet=10.42.0.0/16`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if runtime.GOOS == "windows" {
+			utils.Terminal().Println("unsupported OS")
+			return
+		}
 		if gatewaySubnet == "" {
 			cmd.Help()
 			return
 		}
 
-		if gatewayInterface	== "" {
+		if gatewayInterface == "" {
 			gatewayInterface = utils.GetDefaultInterfaceName()
 		}
 
 		if _, _, err := net.ParseCIDR(gatewaySubnet); err != nil {
-			fmt.Printf("❌ Invalid subnet format: %s\n", gatewaySubnet)
+			utils.Terminal().Errorf("Invalid subnet format: %s\n", gatewaySubnet)
 			return
 		}
 
-		fmt.Printf("Updating gateway subnet to '%s' using interface '%s'...\n", gatewaySubnet, gatewayInterface)
+		// utils.Terminal().Printf("Updating gateway subnet to '%s' using interface '%s'...\n", gatewaySubnet, gatewayInterface)
+		utils.Terminal().StartProgress(fmt.Sprintf("Updating gateway subnet to '%s' using interface '%s'...\n", gatewaySubnet, gatewayInterface))
+		defer utils.Terminal().StopProgress()
 
-		wiredoor.UpdateGatewaySubnet(wiredoor.GatewayNetwork{ Interface: gatewayInterface, Subnet: gatewaySubnet })
+		wiredoor.UpdateGatewaySubnet(wiredoor.GatewayNetwork{Interface: gatewayInterface, Subnet: gatewaySubnet})
 	},
 }
 

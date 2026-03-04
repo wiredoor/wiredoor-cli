@@ -1,9 +1,13 @@
+//go:build !windows
+// +build !windows
+
 package wiredoor
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -15,6 +19,8 @@ func StartService() error {
 		return run([]string{"systemctl", "start", "wiredoor.service"})
 	case "openrc":
 		return run([]string{"rc-service", "wiredoor", "start"})
+	case "launchd":
+		return run([]string{"brew", "services", "start", "wiredoor/cli/wiredoor"})
 	default:
 		return fmt.Errorf("unsupported init system: %s", init)
 	}
@@ -28,6 +34,8 @@ func StopService() error {
 		return run([]string{"systemctl", "stop", "wiredoor.service"})
 	case "openrc":
 		return run([]string{"rc-service", "wiredoor", "stop"})
+	case "launchd":
+		return run([]string{"brew", "services", "stop", "wiredoor/cli/wiredoor"})
 	default:
 		return fmt.Errorf("unsupported init system: %s", init)
 	}
@@ -41,6 +49,8 @@ func RestartService() error {
 		return run([]string{"systemctl", "restart", "wiredoor.service"})
 	case "openrc":
 		return run([]string{"rc-service", "wiredoor", "restart"})
+	case "launchd":
+		return run([]string{"brew", "services", "restart", "wiredoor/cli/wiredoor"})
 	default:
 		return fmt.Errorf("unsupported init system: %s", init)
 	}
@@ -54,6 +64,8 @@ func EnableService() error {
 		return run([]string{"systemctl", "enable", "wiredoor.service"})
 	case "openrc":
 		return run([]string{"rc-update", "add", "wiredoor", "default"})
+	case "launchd":
+		return run([]string{"brew", "services", "start", "wiredoor/cli/wiredoor"})
 	default:
 		return fmt.Errorf("unsupported init system: %s", init)
 	}
@@ -67,6 +79,8 @@ func DisableService() error {
 		return run([]string{"systemctl", "disable", "wiredoor.service"})
 	case "openrc":
 		return run([]string{"rc-update", "del", "wiredoor"})
+	case "launchd":
+		return run([]string{"brew", "services", "stop", "wiredoor/cli/wiredoor"})
 	default:
 		return fmt.Errorf("unsupported init system: %s", init)
 	}
@@ -88,6 +102,9 @@ func getDistroID() string {
 
 // getInitSystem returns "systemd" or "openrc"
 func getInitSystem() string {
+	if runtime.GOOS == "darwin" {
+		return "launchd"
+	}
 	switch getDistroID() {
 	case "alpine":
 		return "openrc"

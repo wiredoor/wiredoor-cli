@@ -1,3 +1,6 @@
+//go:build !windows
+// +build !windows
+
 /*
 Copyright © 2024 Daniel Mesa <support@wiredoor.net>
 */
@@ -41,8 +44,10 @@ Typical usage:
 		useDaemon, _ := cmd.Flags().GetBool("daemon")
 		setDaemon := cmd.Flags().Changed("daemon")
 
-		if (!wiredoor.WireguardInterfaceExists()) {
+		if !wiredoor.WireguardInterfaceExists() {
 			wiredoor.Connect(wiredoor.ConnectionConfig{URL: url, Token: token, UseDaemon: useDaemon, SetDaemon: setDaemon})
+		} else {
+			wiredoor.Status()
 		}
 	},
 }

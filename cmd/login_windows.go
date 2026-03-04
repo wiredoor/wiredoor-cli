@@ -1,16 +1,23 @@
+//go:build windows
+// +build windows
+
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 */
+
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/wiredoor/wiredoor-cli/utils"
 	"github.com/wiredoor/wiredoor-cli/wiredoor"
+	"golang.org/x/sys/windows/svc"
 )
 
 var loginCmd = &cobra.Command{
@@ -41,7 +48,7 @@ Prompts will guide you through the registration and configuration process.`,
 		url, _ := cmd.Flags().GetString("url")
 
 		if url == "" && !wiredoor.IsServerConfigSet() {
-			fmt.Println("You must define Wiredoor server URL. Please use flag --url and try again.")
+			utils.Terminal().Hint("You must define Wiredoor server URL. Please use flag --url and try again.")
 			return
 		}
 
@@ -76,8 +83,8 @@ Prompts will guide you through the registration and configuration process.`,
 		token, err := wiredoor.AdminLogin(url, username, password)
 
 		if err != nil {
-			printErrorAndExit(err, 1)
-			return
+			utils.Terminal().Errorf("%v", err)
+			os.Exit(1)
 		}
 
 		survey.AskOne(&survey.Input{
@@ -115,20 +122,71 @@ Prompts will guide you through the registration and configuration process.`,
 		}, &allowInternet)
 
 		node, err := wiredoor.ConfigureNode(url, token, wiredoor.NodeParams{
-			Name:           nodeName,
-			IsGateway:      isGateway,
+			Name:            nodeName,
+			IsGateway:       isGateway,
 			GatewayNetworks: gatewayNetworks,
-			AllowInternet:  allowInternet,
+			AllowInternet:   allowInternet,
 		})
 
 		if err != nil {
-			printErrorAndExit(err, 1)
-			return
+			utils.Terminal().Errorf("%v", err)
+			os.Exit(1)
 		}
 
-		fmt.Printf("Node %s registered successfully!\n", node.Name)
+		utils.Terminal().Printf("Node %s registered successfully!\n", node.Name)
 
-		wiredoor.Connect(wiredoor.ConnectionConfig{})
+		//Service IPC
+		// wiredoor.Connect(wiredoor.ConnectionConfig{})
+		utils.Terminal().StartProgress("Connecting...")
+		defer utils.Terminal().StopProgress()
+
+		isWindowsService, err := svc.IsWindowsService()
+		if err != nil {
+			utils.Terminal().StopProgress()
+			utils.Terminal().Errorf("to detect if running as service, %v\n", err)
+			slog.Error(fmt.Sprintf("error detecting if I am a service, %v\n", err))
+			os.Exit(1)
+		}
+		if isWindowsService {
+			utils.Terminal().StopProgress()
+			utils.Terminal().Errorf("login command not usable as service")
+			slog.Error("error, login command not usable as service")
+			os.Exit(1)
+		}
+
+		jsonToSend := make(map[string]interface{})
+		jsonToSend["command"] = "connect"
+
+		if resp, err := utils.ExecuteLocalSystemServiceTask(jsonToSend); err == nil {
+			utils.Terminal().StopProgress()
+			jsonResponse := make(map[string]interface{})
+			if err := json.Unmarshal(resp, &jsonResponse); err == nil {
+				if response, ok := jsonResponse["response"].(string); ok {
+					switch response {
+					case "ok":
+						wiredoor.Status()
+						os.Exit(0)
+					default:
+						utils.Terminal().Warnf("Unhandled service reposnse: %v", response)
+						slog.Error(fmt.Sprintf("unhandled service reposnse: %v", response))
+						os.Exit(1)
+					}
+				} else {
+					utils.Terminal().Errorf("Bad service reposnse format: %v", string(resp))
+					slog.Error(fmt.Sprintf("response format error: %v", resp))
+					os.Exit(1)
+				}
+			} else {
+				utils.Terminal().Errorf("Bad service reposnse format: %v", string(resp))
+				slog.Error(fmt.Sprintf("response format error: %v", resp))
+				os.Exit(1)
+			}
+		} else {
+			utils.Terminal().StopProgress()
+			utils.Terminal().Errorf("Service comunication error: %v", err)
+			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
+			os.Exit(1)
+		}
 	},
 }
 
@@ -136,9 +194,4 @@ func init() {
 	rootCmd.AddCommand(loginCmd)
 
 	loginCmd.Flags().String("url", "", "URL Domain or Server IP of Wiredoor instance")
-}
-
-func printErrorAndExit(err error, code int) {
-	fmt.Fprintln(os.Stderr, "Error:", err)
-	os.Exit(code)
 }

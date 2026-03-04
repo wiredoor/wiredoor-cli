@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"net"
 	"os/exec"
 	"regexp"
@@ -16,16 +17,19 @@ func CheckPort(host string, port int) bool {
 
 	conn, err := net.DialTimeout("tcp", address, timeout)
 	if err != nil {
-			fmt.Printf("Port %d is closed or unreachable: %v\n", port, err)
-			return false
+		Terminal().Errorf("Port %d is closed or unreachable: %v\n", port, err)
+		return false
 	}
 	defer conn.Close()
 
 	return true
 }
 
-func LocalTunnelIP() string {
-	iface, err := net.InterfaceByName("wg0")
+func LocalTunnelIP(tunnel string) string {
+	if tunnel == "" {
+		tunnel = TunnelName
+	}
+	iface, err := net.InterfaceByName(tunnel)
 	if err != nil {
 		return ""
 	}
@@ -37,8 +41,11 @@ func LocalTunnelIP() string {
 	return ip.String()
 }
 
-func LocalServerIP() string {
-	iface, err := net.InterfaceByName("wg0")
+func LocalServerIP(tunnel string) string {
+	if tunnel == "" {
+		tunnel = TunnelName
+	}
+	iface, err := net.InterfaceByName(tunnel)
 	if err != nil {
 		return ""
 	}
@@ -46,12 +53,22 @@ func LocalServerIP() string {
 	if err != nil || len(addrs) == 0 {
 		return ""
 	}
-	ip, _, _ := net.ParseCIDR(addrs[0].String())
+	ip, _, err := net.ParseCIDR(addrs[0].String())
+
+	if err != nil {
+		slog.Info("ParseCIDR error", "error", err)
+		return ""
+	}
 
 	ipv4 := ip.To4()
 
 	serverIP := make(net.IP, len(ipv4))
 	copy(serverIP, ipv4)
+
+	if len(serverIP) < 4 {
+		slog.Info("serverIP shrot len", "len", len(serverIP))
+		return ""
+	}
 
 	serverIP[3] = 1
 
@@ -103,7 +120,7 @@ func GetDefaultInterfaceName() string {
 	if err := cmd.Run(); err != nil {
 		return "eth0"
 	}
-	
+
 	re := regexp.MustCompile(`dev\s+(\S+)`)
 	matches := re.FindStringSubmatch(out.String())
 	if len(matches) < 2 {
