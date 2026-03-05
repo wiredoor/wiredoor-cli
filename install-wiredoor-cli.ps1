@@ -3,15 +3,18 @@ $ErrorActionPreference = 'Stop'
 
 $ExeName = 'wiredoor.exe'
 $ServiceName = 'wiredoorService'
-$VERSION = '1.0.0'
 $WgVERSION = '0.5.3'
 
+$ApiUrl = "https://api.github.com/repos/wiredoor/wiredoor-cli/releases/latest"
 $InstallDir = Join-Path $env:LOCALAPPDATA 'Wiredoor\bin'
 $TempDir = Join-Path $env:TEMP 'Wiredoor-Install'
 $Arch = if ([Environment]::Is64BitOperatingSystem) { 'amd64' } else { '' }
 
+$ReleaseInfo = Invoke-RestMethod -Uri $ApiUrl -UseBasicParsing
+$VERSION = ($ReleaseInfo.tag_name -replace '^v','')
+
 # Job artifacts base URL
-$ReleaseBaseUrl = 'https://github.com/wiredoor/wiredoor-cli/releases/download/latest'
+$ReleaseBaseUrl = 'https://github.com/wiredoor/wiredoor-cli/releases/download/v' + $VERSION
 
 $FileName = "wiredoor_${VERSION}_windows_${Arch}.exe"
 $DownloadUrl = "$ReleaseBaseUrl/$FileName"
@@ -103,6 +106,41 @@ elseif ($ext -eq '.exe') {
 else {
     Fail "Unsupported downloaded file type: $ext (expected .exe or .zip)"
 }
+
+function Test-IsAdministrator {
+    $id = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $p  = New-Object Security.Principal.WindowsPrincipal($id)
+    return $p.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Ensure-RunAsAdministrator {
+    param(
+        [string[]]$PassThruArgs = @()
+    )
+
+    if (Test-IsAdministrator) { return }
+
+    Write-Host "[wiredoor] Elevation required. Requesting admin privileges..."
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = 'powershell.exe'
+    $psi.Arguments = @(
+        '-NoProfile',
+        '-ExecutionPolicy', 'Bypass',
+        '-File', ('"{0}"' -f $PSCommandPath)
+    ) + $PassThruArgs -join ' '
+    $psi.Verb = 'runas'   # UAC prompt
+
+    try {
+        [Diagnostics.Process]::Start($psi) | Out-Null
+    } catch {
+        throw "[wiredoor] ERROR: Elevation was cancelled or failed: $($_.Exception.Message)"
+    }
+
+    exit 0
+}
+
+Ensure-RunAsAdministrator
 
 # -----------------------------
 # Check WireGuard
