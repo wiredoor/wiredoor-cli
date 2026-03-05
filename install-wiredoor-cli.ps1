@@ -13,7 +13,6 @@ $Arch = if ([Environment]::Is64BitOperatingSystem) { 'amd64' } else { '' }
 $ReleaseInfo = Invoke-RestMethod -Uri $ApiUrl -UseBasicParsing
 $VERSION = ($ReleaseInfo.tag_name -replace '^v','')
 
-# Job artifacts base URL
 $ReleaseBaseUrl = 'https://github.com/wiredoor/wiredoor-cli/releases/download/v' + $VERSION
 
 $FileName = "wiredoor_${VERSION}_windows_${Arch}.exe"
@@ -54,6 +53,41 @@ function Test-Command {
     param([Parameter(Mandatory)][string]$Name)
     return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
 }
+
+function Test-IsAdministrator {
+    $id = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $p  = New-Object Security.Principal.WindowsPrincipal($id)
+    return $p.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Invoke-AdminElevation {
+    param([string[]]$PassThruArgs = @())
+
+    if (Test-IsAdministrator) { return }
+
+    Write-Host "[wiredoor] Elevation required. Requesting admin privileges..."
+
+    if (-not $PSCommandPath) {
+        throw "[wiredoor] ERROR: Cannot self-elevate because PSCommandPath is empty. Run this script from a .ps1 file."
+    }
+
+    $argList = @(
+        '-NoProfile',
+        '-ExecutionPolicy', 'Bypass',
+        '-NoExit',
+        '-File', ('"{0}"' -f $PSCommandPath)
+    ) + $PassThruArgs
+
+    try {
+        Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $argList | Out-Null
+    } catch {
+        throw "[wiredoor] ERROR: Elevation was cancelled or failed: $($_.Exception.Message)"
+    }
+
+    exit 0
+}
+
+Invoke-AdminElevation
 
 # -----------------------------
 # Preflight
@@ -106,41 +140,6 @@ elseif ($ext -eq '.exe') {
 else {
     Fail "Unsupported downloaded file type: $ext (expected .exe or .zip)"
 }
-
-function Test-IsAdministrator {
-    $id = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $p  = New-Object Security.Principal.WindowsPrincipal($id)
-    return $p.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
-
-function Ensure-RunAsAdministrator {
-    param(
-        [string[]]$PassThruArgs = @()
-    )
-
-    if (Test-IsAdministrator) { return }
-
-    Write-Host "[wiredoor] Elevation required. Requesting admin privileges..."
-
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = 'powershell.exe'
-    $psi.Arguments = @(
-        '-NoProfile',
-        '-ExecutionPolicy', 'Bypass',
-        '-File', ('"{0}"' -f $PSCommandPath)
-    ) + $PassThruArgs -join ' '
-    $psi.Verb = 'runas'   # UAC prompt
-
-    try {
-        [Diagnostics.Process]::Start($psi) | Out-Null
-    } catch {
-        throw "[wiredoor] ERROR: Elevation was cancelled or failed: $($_.Exception.Message)"
-    }
-
-    exit 0
-}
-
-Ensure-RunAsAdministrator
 
 # -----------------------------
 # Check WireGuard
