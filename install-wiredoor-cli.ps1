@@ -77,12 +77,8 @@ function Invoke-AdminElevation {
         $scriptPath = Join-Path $env:TEMP 'wiredoor-install.ps1'
 
         try {
-            $content = $MyInvocation.MyCommand.Definition
-            if ([string]::IsNullOrWhiteSpace($content) -or $content -notmatch '\S') {
-                throw "Could not capture script content for elevation."
-            }
-
-            Set-Content -LiteralPath $scriptPath -Value $content -Encoding UTF8 -Force
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Invoke-WebRequest -Uri "https://raw.githubusercontent.com/wiredoor/wiredoor-cli/main/install-wiredoor-cli.ps1" -UseBasicParsing -OutFile $scriptPath
         } catch {
             throw "[wiredoor] ERROR: Cannot self-elevate when run via iwr|iex because the script cannot be persisted to disk: $($_.Exception.Message)"
         }
@@ -98,6 +94,7 @@ if (`$ec -ne 0) {
 } else {
     Write-Host '[wiredoor] Done!' -ForegroundColor Green
 }
+rm -LiteralPath '$scriptPath' -ErrorAction SilentlyContinue
 Write-Host 'Press Enter to close...'
 [void][Console]::ReadLine()
 exit `$ec
