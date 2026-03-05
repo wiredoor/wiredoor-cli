@@ -8,7 +8,12 @@ $WgVERSION = '0.5.3'
 $ApiUrl = "https://api.github.com/repos/wiredoor/wiredoor-cli/releases/latest"
 $InstallDir = Join-Path $env:LOCALAPPDATA 'Wiredoor\bin'
 $TempDir = Join-Path $env:TEMP 'Wiredoor-Install'
-$Arch = if ([Environment]::Is64BitOperatingSystem) { 'amd64' } else { '' }
+
+if (-not [Environment]::Is64BitOperatingSystem) {
+    throw "Unsupported architecture: x86 (32-bit OS)."
+}
+
+$Arch = 'amd64'
 
 $ReleaseInfo = Invoke-RestMethod -Uri $ApiUrl -UseBasicParsing
 $VERSION = ($ReleaseInfo.tag_name -replace '^v','')
@@ -67,16 +72,42 @@ function Invoke-AdminElevation {
 
     Write-Host "[wiredoor] Elevation required. Requesting admin privileges..."
 
-    if (-not $PSCommandPath) {
-        throw "[wiredoor] ERROR: Cannot self-elevate because PSCommandPath is empty. Run this script from a .ps1 file."
+    $scriptPath = $PSCommandPath
+    if ([string]::IsNullOrWhiteSpace($scriptPath)) {
+        $scriptPath = Join-Path $env:TEMP 'wiredoor-install.ps1'
+
+        try {
+            $content = $MyInvocation.MyCommand.Definition
+            if ([string]::IsNullOrWhiteSpace($content) -or $content -notmatch '\S') {
+                throw "Could not capture script content for elevation."
+            }
+
+            Set-Content -LiteralPath $scriptPath -Value $content -Encoding UTF8 -Force
+        } catch {
+            throw "[wiredoor] ERROR: Cannot self-elevate when run via iwr|iex because the script cannot be persisted to disk: $($_.Exception.Message)"
+        }
     }
+
+    $joinedArgs = if ($PassThruArgs -and $PassThruArgs.Count -gt 0) { ($PassThruArgs -join ' ') } else { '' }
+
+    $cmd = @"
+& '$scriptPath' $joinedArgs
+`$ec = `$LASTEXITCODE
+if (`$ec -ne 0) {
+    Write-Host '[wiredoor] Install failed (exit code:' `$ec ')' -ForegroundColor Red
+} else {
+    Write-Host '[wiredoor] Done!' -ForegroundColor Green
+}
+Write-Host 'Press Enter to close...'
+[void][Console]::ReadLine()
+exit `$ec
+"@
 
     $argList = @(
         '-NoProfile',
         '-ExecutionPolicy', 'Bypass',
-        '-NoExit',
-        '-File', ('"{0}"' -f $PSCommandPath)
-    ) + $PassThruArgs
+        '-Command', $cmd
+    )
 
     try {
         Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $argList | Out-Null
