@@ -11,7 +11,7 @@ COMPLETIONS_DIR := completions
 MAN_DIR := man
 MAN_GZ_DIR := man-gz
 
-build-pkgs: build-artifacts build-docs build-binaries build-deb build-rpm build-apk build-pacman build-windows build-macos clean
+build-pkgs: build-artifacts build-docs build-binaries build-deb build-rpm build-apk build-pacman build-windows build-macos build-linux clean
 
 build-artifacts:
 	chmod +x ./gen-winres.sh
