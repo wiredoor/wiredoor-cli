@@ -5,6 +5,7 @@ PKG_NAME := wiredoor
 GO_MODULE := github.com/wiredoor/wiredoor-cli
 ARCHS := amd64 arm64
 WIN_ARCHS := amd64
+LINUX_TMP := $(OUT_PATH)/linux-tmp
 MACOS_TMP := $(OUT_PATH)/macos-tmp
 COMPLETIONS_DIR := completions
 MAN_DIR := man
@@ -112,6 +113,26 @@ build-macos:
 		( cd "$(MACOS_TMP)" && tar -czf "$(abspath $(OUT_PATH))/$(PKG_NAME)_$(VERSION)_darwin_$(arch).tar.gz" . ); \
 		echo "$(PKG_NAME)_$(VERSION)_darwin_$(arch).tar.gz"; \
 		shasum -a 256 "$(OUT_PATH)/$(PKG_NAME)_$(VERSION)_darwin_$(arch).tar.gz"; \
+	)
+
+build-linux:
+	@mkdir -p "$(BIN_PATH)" "$(OUT_PATH)"
+	@$(foreach arch,$(ARCHS), \
+		echo "Building Linux for $(arch)..."; \
+		CGO_ENABLED=0 GOOS=linux GOARCH=$(arch) go build \
+			-ldflags "-X '$(GO_MODULE)/version.Version=$(VERSION)'" \
+			-o "$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)" \
+			.; \
+		echo "Packaging Linux tar.gz for $(arch)..."; \
+		rm -rf "$(LINUX_TMP)"; \
+		mkdir -p "$(LINUX_TMP)/completions" "$(LINUX_TMP)/man"; \
+		cp "$(BIN_PATH)/$(PKG_NAME)-linux-$(arch)" "$(LINUX_TMP)/$(PKG_NAME)"; \
+		chmod +x "$(LINUX_TMP)/$(PKG_NAME)"; \
+		cp -R "$(COMPLETIONS_DIR)/." "$(LINUX_TMP)/completions/"; \
+		cp -R "$(MAN_GZ_DIR)/." "$(LINUX_TMP)/man/"; \
+		( cd "$(LINUX_TMP)" && tar -czf "$(abspath $(OUT_PATH))/$(PKG_NAME)_$(VERSION)_linux_$(arch).tar.gz" . ); \
+		echo "$(PKG_NAME)_$(VERSION)_linux_$(arch).tar.gz"; \
+		shasum -a 256 "$(OUT_PATH)/$(PKG_NAME)_$(VERSION)_linux_$(arch).tar.gz"; \
 	)
 
 clean:
