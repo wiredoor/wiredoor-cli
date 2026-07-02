@@ -1,4 +1,5 @@
 .gitlab-ci.yml
+.gocache
 bin
 dist
 **/config.ini
