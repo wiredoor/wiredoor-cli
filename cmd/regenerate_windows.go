@@ -36,8 +36,8 @@ Use this when:
   - You need to rotate credentials for security compliance
   - You want to reset the node's identity with new keys
 
-⚠️ Warning:
-  Regenerating keys and token may cause a temporary downtime in all exposed services.
+Warning:
+  Regenerating keys and the token may cause temporary downtime for all exposed services.
   The VPN tunnel will be restarted, and existing connections may be briefly interrupted.
 
 Note:
@@ -54,7 +54,7 @@ Examples:
 			doContinue := false
 
 			survey.AskOne(&survey.Confirm{
-				Message: "This command may cause a temporary downtime in all exposed services. Continue?",
+				Message: "This command may cause temporary downtime for all exposed services. Continue?",
 				Default: doContinue,
 			}, &doContinue)
 
@@ -68,7 +68,7 @@ Examples:
 		isWindowsService, err := svc.IsWindowsService()
 		if err != nil {
 			utils.Terminal().StopProgress()
-			utils.Terminal().Errorf("to detect if running as service, %v\n", err)
+			utils.Terminal().Errorf("Unable to determine if running as a service: %v\n", err)
 			slog.Error(fmt.Sprintf("error detecting if I am a service, %v\n", err))
 			os.Exit(1)
 		}
@@ -95,17 +95,17 @@ Examples:
 						wiredoor.Status()
 						os.Exit(0)
 					default:
-						utils.Terminal().Errorf("Fail due to unhandled service reposnse: %v\n", response)
-						slog.Error(fmt.Sprintf("unhandled service reposnse: %v", response))
+						utils.Terminal().Errorf("Failed due to unhandled service response: %v\n", response)
+						slog.Error(fmt.Sprintf("unhandled service response: %v", response))
 						os.Exit(1)
 					}
 				} else {
-					utils.Terminal().Errorf("Fail due to service reposnse format: %v\n", string(resp))
+					utils.Terminal().Errorf("Failed due to service response format: %v\n", string(resp))
 					slog.Error(fmt.Sprintf("response format error: %v", resp))
 					os.Exit(1)
 				}
 			} else {
-				utils.Terminal().Errorf("Fail due to service reposnse format: %v\n", string(resp))
+				utils.Terminal().Errorf("Failed due to service response format: %v\n", string(resp))
 				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}
@@ -125,5 +125,5 @@ Examples:
 
 func init() {
 	rootCmd.AddCommand(regenerateCmd)
-	regenerateCmd.Flags().BoolVarP(&force, "force", "f", false, "Force regenerate without confirmation")
+	regenerateCmd.Flags().BoolVarP(&force, "force", "f", false, "Regenerate without confirmation")
 }

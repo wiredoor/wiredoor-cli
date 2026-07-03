@@ -29,8 +29,8 @@ This command allows you to connect to a Wiredoor instance and register the curre
 via an interactive prompt. You'll be asked to provide:
   - Admin email and password
   - A name for the node (hostname by default)
-  - Whether this node should act as a Gateway (able to expose other backends)
-	- If your node is a gateway you'll need to define gateway network
+  - Whether this node should act as a gateway (able to expose other backends)
+  - Gateway network details, if this node is a gateway
   - Whether to route all traffic through the VPN (optional)
 
 If a node is already configured locally, you will be prompted to overwrite it.
@@ -56,7 +56,7 @@ Prompts will guide you through the registration and configuration process.`,
 			doContinue := false
 
 			survey.AskOne(&survey.Confirm{
-				Message: "Another node is set, do you want to overwrite current config and set a new one?",
+				Message: "Another node is configured. Do you want to overwrite the current configuration and set a new one?",
 				Default: doContinue,
 			}, &doContinue)
 
@@ -73,7 +73,7 @@ Prompts will guide you through the registration and configuration process.`,
 		defaultInterface := utils.GetDefaultInterfaceName()
 
 		survey.AskOne(&survey.Input{
-			Message: "EMail:",
+			Message: "Email:",
 		}, &username, survey.WithValidator(survey.Required))
 
 		survey.AskOne(&survey.Password{
@@ -88,12 +88,12 @@ Prompts will guide you through the registration and configuration process.`,
 		}
 
 		survey.AskOne(&survey.Input{
-			Message: "Node Name:",
+			Message: "Node name:",
 			Default: hostname,
 		}, &nodeName)
 
 		survey.AskOne(&survey.Confirm{
-			Message: "Is this node a Gateway?",
+			Message: "Is this node a gateway?",
 			Default: false,
 		}, &isGateway)
 
@@ -101,12 +101,12 @@ Prompts will guide you through the registration and configuration process.`,
 
 		if isGateway {
 			survey.AskOne(&survey.Input{
-				Message: "Gateway Interface:",
+				Message: "Gateway interface:",
 				Default: defaultInterface,
 			}, &iface, survey.WithValidator(survey.Required))
 
 			survey.AskOne(&survey.Input{
-				Message: "Gateway CIDR Subnet:",
+				Message: "Gateway CIDR subnet:",
 				Default: defaultSubnet,
 			}, &subnet, survey.WithValidator(survey.Required))
 
@@ -143,7 +143,7 @@ Prompts will guide you through the registration and configuration process.`,
 		isWindowsService, err := svc.IsWindowsService()
 		if err != nil {
 			utils.Terminal().StopProgress()
-			utils.Terminal().Errorf("to detect if running as service, %v\n", err)
+			utils.Terminal().Errorf("Unable to determine if running as a service: %v\n", err)
 			slog.Error(fmt.Sprintf("error detecting if I am a service, %v\n", err))
 			os.Exit(1)
 		}
@@ -167,24 +167,24 @@ Prompts will guide you through the registration and configuration process.`,
 						wiredoor.Status()
 						os.Exit(0)
 					default:
-						utils.Terminal().Warnf("Unhandled service reposnse: %v", response)
-						slog.Error(fmt.Sprintf("unhandled service reposnse: %v", response))
+						utils.Terminal().Warnf("Unhandled service response: %v", response)
+						slog.Error(fmt.Sprintf("unhandled service response: %v", response))
 						os.Exit(1)
 					}
 				} else {
-					utils.Terminal().Errorf("Bad service reposnse format: %v", string(resp))
+					utils.Terminal().Errorf("Bad service response format: %v", string(resp))
 					slog.Error(fmt.Sprintf("response format error: %v", resp))
 					os.Exit(1)
 				}
 			} else {
-				utils.Terminal().Errorf("Bad service reposnse format: %v", string(resp))
+				utils.Terminal().Errorf("Bad service response format: %v", string(resp))
 				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}
 		} else {
 			utils.Terminal().StopProgress()
-			utils.Terminal().Errorf("Service comunication error: %v", err)
-			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
+			utils.Terminal().Errorf("Service communication error: %v", err)
+			slog.Error(fmt.Sprintf("Service communication error: %v", err))
 			os.Exit(1)
 		}
 	},
@@ -193,5 +193,5 @@ Prompts will guide you through the registration and configuration process.`,
 func init() {
 	rootCmd.AddCommand(loginCmd)
 
-	loginCmd.Flags().String("url", "", "URL Domain or Server IP of Wiredoor instance")
+	loginCmd.Flags().String("url", "", "Domain URL or server IP of the Wiredoor instance")
 }

@@ -17,8 +17,8 @@ var showVersion bool
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "wiredoor",
-	Short: "Wiredoor CLI - Ingress as a service",
-	Long:  "Wiredoor CLI allows you to connect, expose, and manage nodes and services securely with Wiredoor Server.",
+	Short: "Wiredoor CLI - ingress as a service",
+	Long:  "Wiredoor CLI lets you securely connect, expose, and manage nodes and services with Wiredoor Server.",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		utils.InitConsole(utils.ConsoleOptions{})
 		return nil

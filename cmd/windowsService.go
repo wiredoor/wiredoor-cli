@@ -354,13 +354,13 @@ var (
 var windowsServiceCmd = &cobra.Command{
 	Use:    "service",
 	Hidden: true,
-	Short:  "Check the current status on windows, as service",
-	Long: `Check the current status (windows service only)
-By default this command is for internal use, running wiredoor as windows service
+	Short:  "Run Wiredoor as a Windows service",
+	Long: `Run Wiredoor as a Windows service.
+By default, this command is for internal use only.
 
 Optional flags allowed:
 
-  --serviceInterval   Interval in seconds to use with service command(default: 10)
+  --serviceInterval   Interval in seconds to use with the service command (default: 10)
 
 Examples:
 
@@ -379,11 +379,11 @@ Examples:
 		if isService {
 			err = svc.Run(utils.WiredoorServiceName, &wiredoorWindowsService{})
 			if err != nil {
-				slog.Error("Fail to start service mode")
+				slog.Error("Failed to start service mode")
 				os.Exit(1)
 			}
 		} else {
-			utils.Terminal().Errorf("Running as console app, made for run as service ...\n")
+			utils.Terminal().Errorf("Running as a console app; this command must run as a service.\n")
 			os.Exit(1)
 		}
 	},

@@ -19,15 +19,15 @@ var enableCmd = &cobra.Command{
 	Short: "Re-enable a previously disabled Wiredoor service",
 	Long: `Re-enable a previously disabled Wiredoor service.
 
-This command restores public access to a service that was disabled using 'wiredoor disable'.
-It does not require redefining the configuration — it simply reactivates the route on the Wiredoor gateway.
+This command restores public access to a service that was disabled with 'wiredoor disable'.
+It does not require redefining the configuration - it simply reactivates the route on the Wiredoor gateway.
 
 Arguments:
   <type>   The type of service to enable: "http" or "tcp"
-  <ID>     The ID of the service to enable (check services ID with 'wiredoor status')
+  <ID>     The ID of the service to enable (check service IDs with 'wiredoor status')
 
 Optional flags:
-	--ttl						 Time-to-live duration for the exposure (e.g., "30m", "1h", "2d").
+  --ttl    Time-to-live duration for the exposure (e.g., "30m", "1h", "2d").
                    Automatically disables the service after the specified duration.
 
 Examples:

@@ -90,14 +90,14 @@ Afterwards, simply run:
 					os.Exit(1)
 				}
 			} else {
-				utils.Terminal().Printf("Fail due to service reposnse format: %v", string(resp))
+				utils.Terminal().Printf("Failed due to service response format: %v", string(resp))
 				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}
 		} else {
 			utils.Terminal().StopProgress()
-			utils.Terminal().Printf("Service comunication error: %v\n", err)
-			slog.Error(fmt.Sprintf("Service comunication error: %v", err))
+			utils.Terminal().Printf("Service communication error: %v\n", err)
+			slog.Error(fmt.Sprintf("Service communication error: %v", err))
 			os.Exit(1)
 		}
 	},

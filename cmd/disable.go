@@ -24,7 +24,7 @@ It does not remove the service or its configuration, so it can be restored at an
 
 Arguments:
   <type>   The type of service to disable: "http" or "tcp"
-  <ID>     The ID of the service to disable (check services ID with 'wiredoor status')
+  <ID>     The ID of the service to disable (check service IDs with 'wiredoor status')
 
 Examples:
   wiredoor disable http 4

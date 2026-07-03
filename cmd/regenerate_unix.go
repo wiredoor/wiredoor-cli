@@ -30,8 +30,8 @@ Use this when:
   - You need to rotate credentials for security compliance
   - You want to reset the node's identity with new keys
 
-⚠️ Warning:
-  Regenerating keys and token may cause a temporary downtime in all exposed services.
+Warning:
+  Regenerating keys and the token may cause temporary downtime for all exposed services.
   The VPN tunnel will be restarted, and existing connections may be briefly interrupted.
 
 Note:
@@ -48,7 +48,7 @@ Examples:
 			doContinue := false
 
 			survey.AskOne(&survey.Confirm{
-				Message: "This command may cause a temporary downtime in all exposed services. Continue?",
+				Message: "This command may cause temporary downtime for all exposed services. Continue?",
 				Default: doContinue,
 			}, &doContinue)
 
@@ -68,5 +68,5 @@ Examples:
 
 func init() {
 	rootCmd.AddCommand(regenerateCmd)
-	regenerateCmd.Flags().BoolVarP(&force, "force", "f", false, "Force regenerate without confirmation")
+	regenerateCmd.Flags().BoolVarP(&force, "force", "f", false, "Regenerate without confirmation")
 }

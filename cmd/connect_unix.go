@@ -24,8 +24,8 @@ This is the standard way to initiate a Wiredoor tunnel after the node has alread
 Optional flags:
   --url           Override the server URL defined in the config file
   --token         Override the node token defined in the config file
-	--daemon        Enable Wiredoor daemon to keep the connection alive and allow remote control (default)
-	--no-daemon     Disable automatic daemon startup after this command
+  --daemon        Enable the Wiredoor daemon to keep the connection alive and allow remote control (default)
+  --no-daemon     Disable automatic daemon startup after this command
 
 Typical usage:
   - Run 'wiredoor connect' to connect using saved credentials

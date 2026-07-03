@@ -38,11 +38,11 @@ Required flags:
 
 Optional flags:
   --proto          Protocol to use for local service ("http" or "https", defaults to "http")
-  --backendHost    Useful when the node is the gateway and needs to forward to another internal host (defaults to "localhost")
+  --backendHost    Internal host to forward to when the node is a gateway (defaults to "localhost")
   --path           URL path to expose (defaults to "/")
   --allow          Comma-separated list of allowed IP addresses or CIDRs (access control)
   --block          Comma-separated list of blocked IP addresses or CIDRs (access control)
-	--ttl						 Time-to-live duration for the exposure (e.g., "30m", "1h", "2d").
+  --ttl            Time-to-live duration for the exposure (e.g., "30m", "1h", "2d").
                    Automatically disables the service after the specified duration.
 
 Example scenario:
@@ -64,7 +64,7 @@ Certificates:
   # Use a custom path and HTTPS
   wiredoor http my-website --domain website.com --port 3000 --path /ui --proto https
 
-  # Forward to another backend host (Only if your configured node is a Gateway)
+  # Forward to another backend host (only if your configured node is a gateway)
   wiredoor http my-website --domain website.com --proto https --backendHost 10.0.0.100 --port 443
 
   # Restrict access to specific IP ranges
@@ -73,7 +73,7 @@ Certificates:
   # Block a specific IP
   wiredoor http my-website --domain website.com --port 3000 --block 203.0.113.42
 	
-	# Expose service temporarily for 1 hour
+  # Expose the service temporarily for 1 hour
   wiredoor http my-website --domain website.com --port 3000 --ttl 1h`,
 	Args: cobra.ExactArgs(1), // require "name"
 	Run: func(cmd *cobra.Command, args []string) {

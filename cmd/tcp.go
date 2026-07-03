@@ -41,9 +41,9 @@ Optional flags:
   --ssl            Enable SSL termination (wrap raw TCP stream in TLS)
   --proto          Backend protocol: "tcp" or "udp" (default: tcp)
   --backendHost    Host IP or name (used when the node is a gateway proxying to internal backends)
-  --allowedIps     List of allowed source IPs or CIDRs
-  --blockedIps     List of blocked source IPs or CIDRs
-	--ttl						 Time-to-live duration for the exposure (e.g., "30m", "1h", "2d").
+  --allowedIps     Comma-separated list of allowed source IPs or CIDRs
+  --blockedIps     Comma-separated list of blocked source IPs or CIDRs
+  --ttl            Time-to-live duration for the exposure (e.g., "30m", "1h", "2d").
                    Automatically disables the service after the specified duration.
 
 How it works:
@@ -68,7 +68,7 @@ Examples:
   # TCP with SSL enabled
   wiredoor tcp redis --port 6379 --ssl
 
-  # Expose services temporarily for 1 hour
+  # Expose the service temporarily for 1 hour
   wiredoor tcp redis --port 6379 --ttl 1h
 
   # UDP service
@@ -112,7 +112,7 @@ func init() {
 	tcpCmd.Flags().BoolVar(&tcpSSL, "ssl", false, "Wrap TCP connection in SSL (TLS)")
 	tcpCmd.Flags().StringVar(&tcpDomain, "domain", "", "Optional domain label (for organizational purposes)")
 	tcpCmd.Flags().StringVar(&tcpBackendHost, "backendHost", "", "Backend host IP or hostname (used by gateway nodes)")
-	tcpCmd.Flags().StringSliceVar(&tcpAllowList, "allowedIps", nil, "List of allowed IPs or CIDRs")
-	tcpCmd.Flags().StringSliceVar(&tcpBlockList, "blockedIps", nil, "List of blocked IPs or CIDRs")
+	tcpCmd.Flags().StringSliceVar(&tcpAllowList, "allowedIps", nil, "List of allowed source IPs or CIDRs")
+	tcpCmd.Flags().StringSliceVar(&tcpBlockList, "blockedIps", nil, "List of blocked source IPs or CIDRs")
 	tcpCmd.Flags().StringVar(&tcpTtl, "ttl", "", "Time-to-live duration for the exposure (e.g., 30m, 1h, 2d)")
 }

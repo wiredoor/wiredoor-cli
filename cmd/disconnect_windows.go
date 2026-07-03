@@ -68,17 +68,17 @@ Examples:
 						utils.Terminal().Printf("Disconnected successfully.\n")
 						os.Exit(0)
 					default:
-						utils.Terminal().Printf("Fail due to unhandled service response: %v\n", response)
+						utils.Terminal().Printf("Failed due to unhandled service response: %v\n", response)
 						slog.Error(fmt.Sprintf("unhandled service response: %v", response))
 						os.Exit(1)
 					}
 				} else {
-					utils.Terminal().Printf("Fail due to service response format: %v\n", string(resp))
+					utils.Terminal().Printf("Failed due to service response format: %v\n", string(resp))
 					slog.Error(fmt.Sprintf("response format error: %v", resp))
 					os.Exit(1)
 				}
 			} else {
-				utils.Terminal().Printf("Fail due to service response format: %v\n", string(resp))
+				utils.Terminal().Printf("Failed due to service response format: %v\n", string(resp))
 				slog.Error(fmt.Sprintf("response format error: %v", resp))
 				os.Exit(1)
 			}

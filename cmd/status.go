@@ -19,15 +19,15 @@ var (
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check the current status of the Wiredoor node and its services",
-	Long: `Displays the current connection status, including VPN status and exposed services.
+	Long: `Display the current connection status, including VPN status and exposed services.
 
-By default, this command will print a summary of the current node configuration,
+By default, this command prints a summary of the current node configuration,
 VPN status, and a list of exposed HTTP/TCP services.
 
 Optional flags allow you to:
   --health     Run a simple health check (for CI or monitoring)
   --watch      Continuously monitor connection and service status
-  --interval   Interval in seconds to use with --watch (default: 5)
+  --interval   Interval in seconds to use with --watch (default: 10)
 
 Examples:
   # Check status once
