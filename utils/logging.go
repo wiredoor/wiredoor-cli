@@ -9,6 +9,12 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+const (
+	defaultLogMaxSizeMB  = 25
+	defaultLogMaxBackups = 5
+	defaultLogMaxAgeDays = 14
+)
+
 type LoggingOptions struct {
 	File string // empty disables file logger
 
@@ -30,6 +36,20 @@ type Logger struct {
 	closer *lumberjack.Logger
 }
 
+func DefaultRotatingJSONLogOptions(file string, appName string, appVersion string) LoggingOptions {
+	return LoggingOptions{
+		File:       file,
+		Level:      slog.LevelDebug,
+		MaxSizeMB:  defaultLogMaxSizeMB,
+		MaxBackups: defaultLogMaxBackups,
+		MaxAgeDays: defaultLogMaxAgeDays,
+		Compress:   true,
+		AppName:    appName,
+		AppVersion: appVersion,
+		AddSource:  true,
+	}
+}
+
 func New(opts LoggingOptions) (*Logger, error) {
 	if strings.TrimSpace(opts.File) == "" {
 		// No file logging; caller can use slog.Default() or stderr handler separately.
@@ -43,9 +63,9 @@ func New(opts LoggingOptions) (*Logger, error) {
 
 	lj := &lumberjack.Logger{
 		Filename:   opts.File,
-		MaxSize:    defInt(opts.MaxSizeMB, 25),
-		MaxBackups: defInt(opts.MaxBackups, 5),
-		MaxAge:     defInt(opts.MaxAgeDays, 14),
+		MaxSize:    defInt(opts.MaxSizeMB, defaultLogMaxSizeMB),
+		MaxBackups: defInt(opts.MaxBackups, defaultLogMaxBackups),
+		MaxAge:     defInt(opts.MaxAgeDays, defaultLogMaxAgeDays),
 		Compress:   defBool(opts.Compress, true),
 	}
 

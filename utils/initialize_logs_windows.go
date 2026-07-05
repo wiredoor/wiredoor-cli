@@ -39,21 +39,17 @@ func init() {
 	var logger *Logger
 
 	if isSvc {
-		logger, err = New(LoggingOptions{
-			File:       os.Getenv("PROGRAMDATA") + "\\wiredoor\\WiredoorServiceLog.json",
-			Level:      slog.LevelDebug,
-			AppName:    "Wiredoor Service",
-			AppVersion: version.Version,
-			AddSource:  true,
-		})
+		logger, err = New(DefaultRotatingJSONLogOptions(
+			os.Getenv("PROGRAMDATA")+"\\wiredoor\\WiredoorServiceLog.json",
+			"Wiredoor Service",
+			version.Version,
+		))
 	} else {
-		logger, err = New(LoggingOptions{
-			File:       os.Getenv("LOCALAPPDATA") + "\\wiredoor\\WiredoorUserLog.json",
-			Level:      slog.LevelDebug,
-			AppName:    "Wiredoor User App",
-			AppVersion: version.Version,
-			AddSource:  true,
-		})
+		logger, err = New(DefaultRotatingJSONLogOptions(
+			os.Getenv("LOCALAPPDATA")+"\\wiredoor\\WiredoorUserLog.json",
+			"Wiredoor User App",
+			version.Version,
+		))
 	}
 	//default log to prevent crash
 	if err == nil {
