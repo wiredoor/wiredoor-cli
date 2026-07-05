@@ -24,6 +24,8 @@ type apiRequest struct {
 	Body    []byte
 	Token   string
 	Timeout int
+	SkipAuth bool
+	SilentErrors bool
 }
 
 type EnableRequest struct {
@@ -306,21 +308,25 @@ func GetNodeConfig() string {
 }
 
 func GetApiConfig() ApiConfig {
-	resp := requestApi(apiRequest{Method: "GET", Path: "/config", Timeout: 5})
+	config := getConfig()
+	resp := requestApi(apiRequest{Method: "GET", Path: "/config", Timeout: 5, SkipAuth: true, SilentErrors: true})
 
 	if resp != nil {
-		config := ApiConfig{}
+		apiConfig := ApiConfig{}
 
-		err := json.Unmarshal(resp, &config)
+		err := json.Unmarshal(resp, &apiConfig)
 
 		if err != nil {
 			utils.Terminal().Errorf("Unable to retrieve API configuration: %v", err)
+			return ApiConfig{VPN_HOST: config.Server.Url}
 		}
 
-		return config
+		if apiConfig.VPN_HOST != "" {
+			return apiConfig
+		}
 	}
 
-	return ApiConfig{}
+	return ApiConfig{VPN_HOST: config.Server.Url}
 }
 
 func GetNodeWGConfig() WGConfig {
@@ -630,7 +636,7 @@ func requestApi(request apiRequest) []byte {
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "wiredoor-cli/"+version.Version)
 
-	if token != "" {
+	if token != "" && !request.SkipAuth {
 		req.Header.Add("Authorization", "Bearer "+token)
 	}
 
@@ -649,17 +655,23 @@ func requestApi(request apiRequest) []byte {
 
 		_ = json.Unmarshal(bodyBytes, &errorRes)
 
-		utils.Terminal().Errorf("Bad Request: %s", errorRes.Message)
+		if !request.SilentErrors {
+			utils.Terminal().Errorf("Bad Request: %s", errorRes.Message)
+		}
 		return nil
 	}
 
 	if resp.StatusCode == 403 || resp.StatusCode == 401 {
-		utils.Terminal().Errorf("Invalid authentication token")
+		if !request.SilentErrors {
+			utils.Terminal().Errorf("Invalid authentication token")
+		}
 		return nil
 	}
 
 	if resp.StatusCode == 404 {
-		utils.Terminal().Errorf("Server not found. Please check your server URL configuration.")
+		if !request.SilentErrors {
+			utils.Terminal().Errorf("Server not found. Please check your server URL configuration.")
+		}
 		return nil
 	}
 
@@ -668,7 +680,7 @@ func requestApi(request apiRequest) []byte {
 
 		_ = json.Unmarshal(bodyBytes, &errorRes)
 
-		if len(errorRes.Errors.Body) > 0 {
+		if !request.SilentErrors && len(errorRes.Errors.Body) > 0 {
 			for _, v := range errorRes.Errors.Body {
 				utils.Terminal().Errorf(" -> %s: %s", v.Field, v.Message)
 			}
@@ -678,12 +690,16 @@ func requestApi(request apiRequest) []byte {
 	}
 
 	if resp.StatusCode >= 500 {
-		utils.Terminal().Errorf("Unknown Wiredoor server error")
+		if !request.SilentErrors {
+			utils.Terminal().Errorf("Unknown Wiredoor server error")
+		}
 		return nil
 	}
 
 	if !strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "application/json") {
-		utils.Terminal().Errorf("Unexpected response format: %s", resp.Header.Get("Content-Type"))
+		if !request.SilentErrors {
+			utils.Terminal().Errorf("Unexpected response format: %s", resp.Header.Get("Content-Type"))
+		}
 		return nil
 	}
 

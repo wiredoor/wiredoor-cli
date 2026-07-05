@@ -277,7 +277,7 @@ func (wsvc *wiredoorWindowsService) Execute(args []string, r <-chan svc.ChangeRe
 						slog.Error("ERROR_PIPE_CONNECTED\n")
 						pipeReady = true
 					case windows.ERROR_NO_DATA:
-						slog.Error("ERROR_NO_DATA Pipe closed: %w\n", err)
+						slog.Error("ERROR_NO_DATA Pipe closed", "error", err)
 					case windows.ERROR_PIPE_LISTENING: // not ready, continue
 						slog.Error("ERROR_PIPE_LISTENING not ready,listening\n")
 					case windows.ERROR_PIPE_BUSY:
