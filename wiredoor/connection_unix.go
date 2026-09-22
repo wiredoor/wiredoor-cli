@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -195,11 +196,27 @@ func parseInterfaceName() (string, error) {
 }
 
 func getInterfaceName() string {
-	iface, err := os.ReadFile("/var/run/wiredoor/" + utils.TunnelName + "-interface")
-	if err != nil || len(iface) == 0 {
+	iface, err := os.ReadFile(interfaceNameFile)
+	if err == nil {
+		ifaceName := strings.TrimSpace(string(iface))
+		if _, err := net.InterfaceByName(ifaceName); err == nil {
+			return ifaceName
+		}
+	}
+
+	ifaceName, err := parseInterfaceName()
+	if err != nil || ifaceName == "" {
 		return ""
 	}
-	return strings.TrimSpace(string(iface))
+	if _, err := net.InterfaceByName(ifaceName); err != nil {
+		return ""
+	}
+
+	if err := os.MkdirAll(filepath.Dir(interfaceNameFile), 0o755); err == nil {
+		_ = os.WriteFile(interfaceNameFile, []byte(ifaceName), 0o644)
+	}
+
+	return ifaceName
 }
 
 func interfaceExists() bool {
