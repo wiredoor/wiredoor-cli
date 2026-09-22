@@ -18,13 +18,13 @@ import (
 )
 
 type apiRequest struct {
-	Server  string
-	Method  string
-	Path    string
-	Body    []byte
-	Token   string
-	Timeout int
-	SkipAuth bool
+	Server       string
+	Method       string
+	Path         string
+	Body         []byte
+	Token        string
+	Timeout      int
+	SkipAuth     bool
 	SilentErrors bool
 }
 
@@ -308,10 +308,7 @@ func GetNodeConfig() string {
 }
 
 func SendDisconnectEvent() {
-	resp := requestApi(apiRequest{Method: "PATCH", Path: "/cli/disconnect", Timeout: 5, SilentErrors: true})
-	if resp != nil {
-		return
-	}
+	requestApi(apiRequest{Method: "PATCH", Path: "/cli/disconnect", Timeout: 5, SilentErrors: true})
 }
 
 func GetApiConfig() ApiConfig {
@@ -628,7 +625,10 @@ func requestApi(request apiRequest) []byte {
 	req, err := http.NewRequest(request.Method, base.String(), bytes.NewBuffer(request.Body))
 
 	if err != nil {
-		utils.Terminal().Errorf("Unable to perform request: %v", err)
+		if !request.SilentErrors {
+			utils.Terminal().Errorf("Unable to perform request: %v", err)
+		}
+		return nil
 	}
 
 	var token string
@@ -650,12 +650,20 @@ func requestApi(request apiRequest) []byte {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		utils.Terminal().Errorf("Request failed: %v", err)
+		if !request.SilentErrors {
+			utils.Terminal().Errorf("Request failed: %v", err)
+		}
 		return nil
 	}
 
 	defer resp.Body.Close()
 	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		if !request.SilentErrors {
+			utils.Terminal().Errorf("Unable to read body response: %v", err)
+		}
+		return nil
+	}
 
 	if resp.StatusCode == 400 {
 		errorRes := BadRequest{}
@@ -708,10 +716,6 @@ func requestApi(request apiRequest) []byte {
 			utils.Terminal().Errorf("Unexpected response format: %s", resp.Header.Get("Content-Type"))
 		}
 		return nil
-	}
-
-	if err != nil {
-		utils.Terminal().Errorf("Unable to read body response: %v", err)
 	}
 
 	return bodyBytes
