@@ -250,6 +250,8 @@ func manualWindowsDisconnect() {
 	if ExistWireguardConfigFile() {
 		_ = os.Remove(wireguardConfigFolder + configFilename)
 	}
+
+	SendDisconnectEvent()
 }
 
 func getInterfaceName() string {

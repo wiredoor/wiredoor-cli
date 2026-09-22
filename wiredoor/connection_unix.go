@@ -154,6 +154,8 @@ func manualLinuxDisconnect() {
 
 		_ = os.Remove(wireguardPath + configFilename)
 		_ = os.Remove(interfaceNameFile)
+
+		SendDisconnectEvent()
 	} else {
 		utils.Terminal().Printf("No active WireGuard configuration found. Already disconnected.")
 	}

@@ -307,6 +307,13 @@ func GetNodeConfig() string {
 	return ""
 }
 
+func SendDisconnectEvent() {
+	resp := requestApi(apiRequest{Method: "PATCH", Path: "/cli/disconnect", Timeout: 5, SilentErrors: true})
+	if resp != nil {
+		return
+	}
+}
+
 func GetApiConfig() ApiConfig {
 	config := getConfig()
 	resp := requestApi(apiRequest{Method: "GET", Path: "/config", Timeout: 5, SkipAuth: true, SilentErrors: true})
