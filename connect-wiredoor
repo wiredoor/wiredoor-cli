@@ -1,8 +1,15 @@
 #!/bin/sh
 
+set -eu
+
 dnsmasq --server=127.0.0.11 --listen-address=0.0.0.0 --bind-interfaces
 
 sudo wiredoor connect --url "${WIREDOOR_URL}" --token "${TOKEN}"
 
-# WARNING "wg0" may change 
-sudo tcpdump -i wg0
+set -- $(sudo wg show interfaces)
+if [ "$#" -eq 0 ]; then
+  echo "WireGuard interface not found" >&2
+  exit 1
+fi
+
+exec sudo tcpdump -l -n -i "$1"
