@@ -15,6 +15,16 @@ for s in 16 24 32 48 64 128 256; do
   rsvg-convert -w "$s" -h "$s" "$SVG" -o "$ICONS_DIR/${s}x${s}.png"
 done
 
+magick \
+  "$ICONS_DIR/16x16.png" \
+  "$ICONS_DIR/24x24.png" \
+  "$ICONS_DIR/32x32.png" \
+  "$ICONS_DIR/48x48.png" \
+  "$ICONS_DIR/64x64.png" \
+  "$ICONS_DIR/128x128.png" \
+  "$ICONS_DIR/256x256.png" \
+  "$ICONS_DIR/wiredoor.ico"
+
 export VERSION
 envsubst < "$WINRES_TPL" > "$WINRES"
 

@@ -41,6 +41,7 @@ WizardStyle=modern
 
 UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\wiredoor.exe
+SetupIconFile=..\icons\wiredoor.ico
 
 [Files]
 Source: "{#SourceExe}"; DestDir: "{app}"; DestName: "wiredoor.exe"; Flags: ignoreversion
