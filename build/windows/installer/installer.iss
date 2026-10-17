@@ -8,6 +8,10 @@
   #define AppVersion "1.2.2"
 #endif
 
+#ifndef SourceExe
+  #define SourceExe "..\..\..\dist\wiredoor_{#AppVersion}_windows_amd64.exe"
+#endif
+
 [Setup]
 AppId=Wiredoor.WiredoorCLI
 AppName={#AppName}
@@ -38,8 +42,8 @@ UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\wiredoor.exe
 
 [Files]
-Source: "..\..\..\dist\wiredoor_{#AppVersion}_windows_amd64.exe"; DestDir: "{app}"; DestName: "wiredoor.exe"; Flags: ignoreversion
-Source: "..\..\..\dist\wiredoor_{#AppVersion}_windows_amd64.exe"; DestDir: "{tmp}"; DestName: "wiredoor-service.exe"; Flags: dontcopy
+Source: "{#SourceExe}"; DestDir: "{app}"; DestName: "wiredoor.exe"; Flags: ignoreversion
+Source: "{#SourceExe}"; DestDir: "{tmp}"; DestName: "wiredoor-service.exe"; Flags: dontcopy
 
 [Registry]
 Root: HKLM; \
