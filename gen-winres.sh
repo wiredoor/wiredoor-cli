@@ -15,7 +15,7 @@ for s in 16 24 32 48 64 128 256; do
   rsvg-convert -w "$s" -h "$s" "$SVG" -o "$ICONS_DIR/${s}x${s}.png"
 done
 
-magick \
+convert \
   "$ICONS_DIR/16x16.png" \
   "$ICONS_DIR/24x24.png" \
   "$ICONS_DIR/32x32.png" \
