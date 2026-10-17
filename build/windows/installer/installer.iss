@@ -35,7 +35,7 @@ Compression=lzma2
 SolidCompression=yes
 
 ChangesEnvironment=yes
-CloseApplications=force
+CloseApplications=yes
 RestartApplications=yes
 WizardStyle=modern
 
