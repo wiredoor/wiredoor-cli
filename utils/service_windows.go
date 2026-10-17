@@ -4,9 +4,9 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"slices"
 	"syscall"
 
@@ -104,148 +104,90 @@ func ServiceRunning(serviceName string) (bool, error) {
 // --------------------------------------------------------------
 // Common api
 // needs Admin priv
+// DeleteService stops and removes a service. An absent service is already uninstalled.
 func DeleteService(serviceName string) error {
-	serviceMangerConnection, err := mgr.Connect()
-	if err == nil {
-		defer serviceMangerConnection.Disconnect()
-	} else {
-		return fmt.Errorf("unable to connect to service manager: %v", err)
+	m, err := mgr.Connect()
+	if err != nil {
+		return fmt.Errorf("connect to service manager: %w", err)
 	}
-	if serviceConnection, err := serviceMangerConnection.OpenService(serviceName); err == nil {
-		defer serviceConnection.Close()
-		if err := serviceConnection.Delete(); err != nil {
-			slog.Error("unable to delete service", "error", err)
-			return fmt.Errorf("unable to delete service: %v", err)
-		}
+	defer m.Disconnect()
+	s, err := m.OpenService(serviceName)
+	if errors.Is(err, windows.ERROR_SERVICE_DOES_NOT_EXIST) {
 		return nil
-	} else {
-		slog.Error("unable to open service", "error", err)
-		return fmt.Errorf("unable to open service: %v", err)
 	}
-}
-func CreateServiceFromThisExecutable(serviceName, user, passwd string) error {
-	serviceMangerConnection, err := mgr.Connect()
-	if err == nil {
-		defer serviceMangerConnection.Disconnect()
-		appPath, err := os.Executable()
-		if err != nil {
-			return fmt.Errorf("unable to find service executable path: %v", err)
-		}
-		var serviceConfig mgr.Config
-		if len(user) <= 0 || len(passwd) <= 0 {
-			//WARNING RUN AS SYSTEM
-			serviceConfig = mgr.Config{
-				DisplayName: serviceName,
-				Description: "Wiredoor Service",
-				// BinaryPathName: appPath + " " + serviceArgs,
-				BinaryPathName: fmt.Sprintf(`"%s"`, appPath),
-				StartType:      mgr.StartAutomatic,
-				ServiceType:    windows.SERVICE_WIN32_OWN_PROCESS,
-			}
-		} else {
-			Terminal().Printf("user : %s\t|\tpasswd : %s\n", user, passwd)
-			serviceConfig = mgr.Config{
-				DisplayName: serviceName,
-				Description: "Wiredoor Service",
-				// BinaryPathName: appPath + " " + serviceArgs,
-				BinaryPathName:   fmt.Sprintf(`"%s"`, appPath),
-				StartType:        mgr.StartAutomatic,
-				ServiceType:      windows.SERVICE_WIN32_OWN_PROCESS,
-				ServiceStartName: user,
-				Password:         passwd,
-			}
-		}
-		// time.Sleep(3 * time.Second)
-		serviceCon, err := serviceMangerConnection.CreateService(serviceName, appPath, serviceConfig, "service", "--serviceInterval", "10")
-		if err != nil {
-			return fmt.Errorf("error creating service: %v", err)
-		}
-		defer serviceCon.Close()
-		return nil
-	} else {
-		return fmt.Errorf("unable to connect to service manager: %v", err)
+	if errors.Is(err, windows.ERROR_SERVICE_MARKED_FOR_DELETE) {
+		return waitForServiceDeletion(m, serviceName)
 	}
+	if err != nil {
+		return fmt.Errorf("open service: %w", err)
+	}
+	if err := deleteManagedService(s); err != nil {
+		return err
+	}
+	// The handle is closed before waiting for Windows to finish deletion.
+	return waitForServiceDeletion(m, serviceName)
 }
 func StartService(serviceName string) error {
-	serviceMangerConnection, err := mgr.Connect()
-	if err == nil {
-		defer serviceMangerConnection.Disconnect()
-	} else {
-		return fmt.Errorf("unable to connect to service manager: %v", err)
+	m, err := mgr.Connect()
+	if err != nil {
+		return fmt.Errorf("connect to service manager: %w", err)
 	}
-	if serviceConnection, err := serviceMangerConnection.OpenService(serviceName); err == nil {
-		//serviceArgs are pased as service args plus app args on BinaryPathName field of serviceConfig
-		defer serviceConnection.Close()
-		if serviceCfg, err := serviceConnection.Config(); err != nil {
-			slog.Error("unable to get service config", "error", err)
-		} else {
-			serviceCfg.StartType = mgr.StartAutomatic
-			if err := serviceConnection.UpdateConfig(serviceCfg); err != nil {
-				slog.Error("unable to update service config", "error", err)
-			}
-		}
-		if err := serviceConnection.Start(""); err != nil {
-			slog.Error("unable to start service", "error", err)
-			return fmt.Errorf("unable to start service: %v", err)
-		}
-		return nil
-	} else {
-		slog.Error("unable to open service", "error", err)
-		return fmt.Errorf("unable to open service: %v", err)
+	defer m.Disconnect()
+	s, err := m.OpenService(serviceName)
+	if err != nil {
+		return fmt.Errorf("open service: %w", err)
 	}
+	defer s.Close()
+	config, err := s.Config()
+	if err != nil {
+		return fmt.Errorf("read service configuration: %w", err)
+	}
+	if config.StartType != mgr.StartAutomatic {
+		config.StartType = mgr.StartAutomatic
+		if err := s.UpdateConfig(config); err != nil {
+			return fmt.Errorf("update service: %w", err)
+		}
+	}
+	return startManagedService(s)
 }
 
-// StopService stops the wiredoor service
+// StopService succeeds if the service is absent or already stopped.
 func StopService(serviceName string) error {
-
-	serviceMangerConnection, err := mgr.Connect()
-	if err == nil {
-		defer serviceMangerConnection.Disconnect()
-		// detect if installed
-		if serviceList, err := serviceMangerConnection.ListServices(); err == nil {
-			if !slices.Contains(serviceList, serviceName) {
-				//not listed
-				slog.Error("not stoped, wiredoor service not found")
-				return fmt.Errorf("not stoped, wiredoor service not found")
-			}
-			//query stop service
-			if serviceConnection, err := serviceMangerConnection.OpenService(serviceName); err == nil {
-				if _, err := serviceConnection.Control(svc.Stop); err != nil {
-					slog.Error("unable to stop service", "error", err)
-					return fmt.Errorf("unable to stop service: %v", err)
-				}
-				return nil
-			} else {
-				slog.Error("unable to open service", "error", err)
-				return fmt.Errorf("unable to open service: %v", err)
-			}
-		} else {
-			slog.Error("error listing serices", "error", err)
-			return fmt.Errorf("error listing serices: %v", err)
-		}
-	} else {
-		slog.Error("unable to access to service manager", "error", err)
-		return fmt.Errorf("unable to access to service manager: %v", err)
+	m, err := mgr.Connect()
+	if err != nil {
+		return fmt.Errorf("connect to service manager: %w", err)
 	}
+	defer m.Disconnect()
+	s, err := m.OpenService(serviceName)
+	if errors.Is(err, windows.ERROR_SERVICE_DOES_NOT_EXIST) {
+		return nil
+	}
+	if errors.Is(err, windows.ERROR_SERVICE_MARKED_FOR_DELETE) {
+		return waitForServiceDeletion(m, serviceName)
+	}
+	if err != nil {
+		return fmt.Errorf("open service: %w", err)
+	}
+	defer s.Close()
+	return stopManagedService(s)
 }
 
-// RestartService restarts the wiredoor service
+// RestartService starts an installed service after waiting for it to stop.
 func RestartService() error {
-	if exists, _ := WiredoorServiceExists(); exists {
-		err := StopService(WiredoorServiceName)
-		if err != nil {
-			slog.Warn("When try to stop service", "error", err)
-		}
-	} else {
-		err := CreateServiceFromThisExecutable(WiredoorServiceName, "", "")
-		if err != nil {
-			return err
-		}
+	if err := StopService(WiredoorServiceName); err != nil {
+		return err
 	}
 	return StartService(WiredoorServiceName)
 }
 
 func EnableService() error {
+	exists, err := WiredoorServiceExists()
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return InstallService()
+	}
 	return RestartService()
 }
 

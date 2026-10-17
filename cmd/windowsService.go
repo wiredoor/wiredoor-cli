@@ -351,23 +351,8 @@ var (
 	serviceInterval int
 )
 
-var windowsServiceCmd = &cobra.Command{
-	Use:    "service",
-	Hidden: true,
-	Short:  "Run Wiredoor as a Windows service",
-	Long: `Run Wiredoor as a Windows service.
-By default, this command is for internal use only.
-
-Optional flags allowed:
-
-  --serviceInterval   Interval in seconds to use with the service command (default: 10)
-
-Examples:
-
-  # Watch status continuously
-  wiredoor service --serviceInterval 10`,
-
-	Run: func(cmd *cobra.Command, args []string) {
+func init() {
+	serviceCmd.RunE = func(cmd *cobra.Command, args []string) error {
 
 		isService, err := svc.IsWindowsService()
 
@@ -383,13 +368,9 @@ Examples:
 				os.Exit(1)
 			}
 		} else {
-			utils.Terminal().Errorf("Running as a console app; this command must run as a service.\n")
-			os.Exit(1)
+			return cmd.Help()
 		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(windowsServiceCmd)
-	windowsServiceCmd.Flags().IntVar(&serviceInterval, "serviceInterval", 10, "Polling interval in seconds (used with service)")
+		return nil
+	}
+	serviceCmd.Flags().IntVar(&serviceInterval, "serviceInterval", 10, "Polling interval in seconds (used with service)")
 }
