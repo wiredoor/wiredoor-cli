@@ -35,7 +35,8 @@ Compression=lzma2
 SolidCompression=yes
 
 ChangesEnvironment=yes
-CloseApplications=yes
+CloseApplications=force
+RestartApplications=yes
 WizardStyle=modern
 
 UninstallDisplayName={#AppName}
