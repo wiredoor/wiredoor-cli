@@ -9,7 +9,7 @@
 #endif
 
 #ifndef SourceExe
-  #define SourceExe "..\..\..\dist\wiredoor_{#AppVersion}_windows_amd64.exe"
+  #define SourceExe "..\..\..\dist\wiredoor_1.2.2_windows_amd64.exe"
 #endif
 
 [Setup]
