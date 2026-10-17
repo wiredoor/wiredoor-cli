@@ -173,6 +173,9 @@ begin
         SysErrorMessage(ResultCode)
       );
 
+    Log('wiredoor service install exit code: ' +
+      IntToStr(ResultCode));
+
     if ResultCode <> 0 then
       RaiseException(
         'wiredoor service install failed with exit code ' +
