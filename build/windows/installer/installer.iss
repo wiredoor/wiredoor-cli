@@ -291,6 +291,15 @@ begin
 
     Log('WireGuard installed successfully');
 
+    Exec(
+      ExpandConstant('{sys}\taskkill.exe'),
+      '/F /IM wireguard.exe',
+      '',
+      SW_HIDE,
+      ewWaitUntilTerminated,
+      ResultCode
+    );
+
   except
     Result := 'Failed to download or install WireGuard: ' +
       GetExceptionMessage;
