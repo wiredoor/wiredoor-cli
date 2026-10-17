@@ -64,7 +64,7 @@ Filename: "{app}\wiredoor.exe"; \
 [Code]
 const
   WireGuardUrl = 'https://download.wireguard.com/windows-client/wireguard-installer.exe';
-  WireGuardFile = 'wireguard.msi';
+  WireGuardFile = 'wireguard-installer.exe';
 
 function IsWireGuardInstalled(): Boolean;
 begin
@@ -217,7 +217,7 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   DownloadPage: TDownloadWizardPage;
   ResultCode: Integer;
-  MsiPath: String;
+  InstallerPath: String;
 begin
   Result := '';
   NeedsRestart := False;
@@ -251,13 +251,13 @@ begin
       DownloadPage.Hide;
     end;
 
-    MsiPath := ExpandConstant('{tmp}\') + WireGuardFile;
+    InstallerPath := ExpandConstant('{tmp}\') + WireGuardFile;
 
     Log('Installing WireGuard');
 
     if not Exec(
-      ExpandConstant('{sys}\msiexec.exe'),
-      '/i "' + MsiPath + '" /qn /norestart',
+      InstallerPath,
+      '/noprompt',
       '',
       SW_HIDE,
       ewWaitUntilTerminated,
