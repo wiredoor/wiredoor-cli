@@ -33,7 +33,7 @@ jobs:
       - name: Install FPM dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ruby ruby-dev build-essential rpm make libarchive-tools zstd curl librsvg2-bin gettext-base
+          sudo apt-get install -y ruby ruby-dev build-essential rpm make libarchive-tools zstd curl librsvg2-bin imagemagick gettext-base
           sudo gem install --no-document fpm
 
       - name: Package .deb and .rpm
@@ -51,6 +51,60 @@ jobs:
             dist/*.pkg.tar.zst
             dist/*.exe
             dist/*.tar.gz
+
+      - name: Upload Windows installer inputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-inputs
+          path: |
+            dist/wiredoor_${{ env.VERSION }}_windows_amd64.exe
+            build/windows/icons/wiredoor.ico
+          if-no-files-found: error
+
+  build-windows-installer:
+    name: Build Windows Installer
+    needs: build-and-package
+    runs-on: windows-2022
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Windows installer inputs
+        uses: actions/download-artifact@v5
+        with:
+          name: windows-installer-inputs
+          path: .
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          $exe = Join-Path $env:GITHUB_WORKSPACE "dist\wiredoor_${version}_windows_amd64.exe"
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+
+          if (-not (Test-Path -LiteralPath $exe)) {
+            throw "Executable not found: $exe"
+          }
+          if (-not (Test-Path -LiteralPath $iscc)) {
+            throw "Inno Setup compiler not found: $iscc"
+          }
+
+          & $iscc "/DAppVersion=$version" "/DSourceExe=$exe" ".\build\windows\installer\installer.iss"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup compilation failed"
+          }
+
+          Get-FileHash "dist/wiredoor_${version}_windows_amd64_setup.exe" -Algorithm SHA256
+
+      - name: Upload Windows installer to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*_windows_amd64_setup.exe
+          fail_on_unmatched_files: true
 
   build-image:
     name: Build Gateway Image

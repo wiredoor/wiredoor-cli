@@ -1,54 +1,200 @@
 ; To compile use: `& "C:\Users\dmesa\AppData\Local\Programs\Inno Setup 6\ISCC.exe" .\installer.iss`
 
-[Setup]
-AppName=Wiredoor CLI
-AppVersion=1.0.0
-DefaultDirName={localappdata}\Wiredoor
-DefaultGroupName=Wiredoor
-OutputBaseFilename=WiredoorSetup
-Compression=lzma
-SolidCompression=yes
-PrivilegesRequired=admin
-ChangesEnvironment=yes
+#define AppName "Wiredoor CLI"
+#define AppPublisher "Wiredoor"
+#define AppURL "https://github.com/wiredoor/wiredoor-cli"
 
-[Dirs]
-Name: "{localappdata}\Wiredoor\bin"
+#ifndef AppVersion
+  #define AppVersion "1.2.2"
+#endif
+
+#ifndef SourceExe
+  #define SourceExe "..\..\..\dist\wiredoor_1.2.2_windows_amd64.exe"
+#endif
+
+[Setup]
+AppId=Wiredoor.WiredoorCLI
+AppName={#AppName}
+AppVersion={#AppVersion}
+AppPublisher={#AppPublisher}
+AppPublisherURL={#AppURL}
+
+DefaultDirName={autopf}\Wiredoor
+UsePreviousAppDir=no
+DisableDirPage=yes
+DefaultGroupName=Wiredoor
+DisableProgramGroupPage=yes
+
+PrivilegesRequired=admin
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
+
+OutputDir=..\..\..\dist
+OutputBaseFilename=wiredoor_{#AppVersion}_windows_amd64_setup
+Compression=lzma2
+SolidCompression=yes
+
+ChangesEnvironment=yes
+CloseApplications=yes
+RestartApplications=yes
+WizardStyle=modern
+
+UninstallDisplayName={#AppName}
+UninstallDisplayIcon={app}\wiredoor.exe
+SetupIconFile=..\icons\wiredoor.ico
 
 [Files]
-; Empaqueta wiredoor.exe dentro del instalador
-Source: "dist\wiredoor_1.0.0_windows_amd64.exe"; DestDir: "{localappdata}\Wiredoor\bin"; Flags: ignoreversion
-; Opcional: empaqueta el MSI de WireGuard para instalar offline
-Source: "dist\wireguard-amd64-0.5.3.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall
+Source: "{#SourceExe}"; DestDir: "{app}"; DestName: "wiredoor.exe"; Flags: ignoreversion
+Source: "{#SourceExe}"; DestDir: "{tmp}"; DestName: "wiredoor-service.exe"; Flags: dontcopy
 
 [Registry]
-; Añadir al PATH del usuario (HKCU). Si prefieres PATH del sistema, usa HKLM y requiere admin (ya lo tienes).
-Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; \
-  ValueData: "{olddata};{localappdata}\Wiredoor\bin"; Flags: preservestringtype
-
-[Run]
-; 1 Instalar WireGuard (si lo empaquetas). Si no lo empaquetas, puedes descargarlo antes o fallar si no está.
-Filename: "msiexec.exe"; Parameters: "/i ""{tmp}\wireguard-amd64-0.5.3.msi"" /qn"; \
-  StatusMsg: "Installing WireGuard..."; Flags: runhidden waituntilterminated; Check: not WireGuardInstalled
-
-; 2 Parar y borrar servicio previo (ignorar errores si no existe)
-Filename: "sc.exe"; Parameters: "stop wiredoorService"; Flags: runhidden; StatusMsg: "Stopping service..."; \
-  Check: ServiceExists
-Filename: "sc.exe"; Parameters: "delete wiredoorService"; Flags: runhidden; StatusMsg: "Removing old service..."; \
-  Check: ServiceExists
-
-; 3 Crear servicio nuevo
-Filename: "sc.exe"; Parameters: "create wiredoorService binPath= """"{localappdata}\Wiredoor\bin\wiredoor.exe"""" service --serviceInterval 10 start= auto obj= LocalSystem"; \
-  Flags: runhidden waituntilterminated; StatusMsg: "Creating service..."
-
-; 4 Arrancar
-Filename: "sc.exe"; Parameters: "start wiredoorService"; Flags: runhidden waituntilterminated; StatusMsg: "Starting service..."
+Root: HKLM; \
+  Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+  ValueType: expandsz; \
+  ValueName: "Path"; \
+  ValueData: "{olddata};{app}"; \
+  Check: NeedsAddPath
 
 [UninstallRun]
-; Stop and delete service on uninstall
-Filename: "sc.exe"; Parameters: "stop wiredoorService"; Flags: runhidden; RunOnceId: "StopWiredoorService"
-Filename: "sc.exe"; Parameters: "delete wiredoorService"; Flags: runhidden; RunOnceId: "DeleteWiredoorService"
+Filename: "{app}\wiredoor.exe"; \
+  Parameters: "service uninstall"; \
+  Flags: runhidden waituntilterminated skipifdoesntexist; \
+  RunOnceId: "UninstallWiredoorService"
 
 [Code]
+const
+  WireGuardUrl = 'https://download.wireguard.com/windows-client/wireguard-installer.exe';
+  WireGuardFile = 'wireguard-installer.exe';
+
+function IsWireGuardInstalled(): Boolean;
+begin
+  Result := FileExists(
+    ExpandConstant('{autopf}\WireGuard\wireguard.exe')
+  );
+end;
+
+function NeedsAddPath(): Boolean;
+var
+  Path: String;
+  AppPath: String;
+begin
+  AppPath := ExpandConstant('{app}');
+
+  if not RegQueryStringValue(
+    HKLM,
+    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
+    'Path',
+    Path
+  ) then
+  begin
+    Result := True;
+    Exit;
+  end;
+
+  Result := Pos(
+    ';' + Uppercase(AppPath) + ';',
+    ';' + Uppercase(Path) + ';'
+  ) = 0;
+end;
+
+procedure RemoveFromPath(RootKey: Integer; Subkey, Directory: String);
+var
+  Path, Entry: String;
+  Position: Integer;
+begin
+  if not RegQueryStringValue(RootKey, Subkey, 'Path', Path) then
+    Exit;
+
+  Path := ';' + Path + ';';
+  Entry := ';' + Uppercase(Directory) + ';';
+  Position := Pos(Entry, Uppercase(Path));
+  if Position = 0 then
+    Exit;
+
+  while Position > 0 do
+  begin
+    Delete(Path, Position, Length(Entry) - 1);
+    Position := Pos(Entry, Uppercase(Path));
+  end;
+
+  Path := Copy(Path, 2, Length(Path) - 2);
+  if not RegWriteExpandStringValue(RootKey, Subkey, 'Path', Path) then
+    RaiseException('Could not update PATH.');
+end;
+
+procedure RemoveLegacyUserInstall();
+var
+  OldDirectory, OldExe: String;
+begin
+  OldDirectory := ExpandConstant('{localappdata}\Wiredoor\bin');
+  OldExe := OldDirectory + '\wiredoor.exe';
+
+  if FileExists(OldExe) then
+    if not DeleteFile(OldExe) then
+      RaiseException('Could not remove ' + OldExe);
+
+  RemoveFromPath(HKCU, 'Environment', OldDirectory);
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+  ExePath: String;
+begin
+  if CurStep = ssInstall then
+  begin
+    ExtractTemporaryFile('wiredoor-service.exe');
+    if not Exec(
+      ExpandConstant('{tmp}\wiredoor-service.exe'),
+      'service stop',
+      '', SW_HIDE, ewWaitUntilTerminated, ResultCode
+    ) then
+      RaiseException('Could not stop the existing Wiredoor service: ' +
+        SysErrorMessage(ResultCode));
+
+    if ResultCode <> 0 then
+      RaiseException('Could not stop the existing Wiredoor service. Exit code: ' +
+        IntToStr(ResultCode));
+  end;
+
+  if CurStep = ssPostInstall then
+  begin
+    ExePath := ExpandConstant('{app}\wiredoor.exe');
+
+    if not Exec(
+      ExePath,
+      'service install',
+      ExpandConstant('{app}'),
+      SW_HIDE,
+      ewWaitUntilTerminated,
+      ResultCode
+    ) then
+      RaiseException(
+        'Failed to execute wiredoor service install: ' +
+        SysErrorMessage(ResultCode)
+      );
+
+    Log('wiredoor service install exit code: ' +
+      IntToStr(ResultCode));
+
+    if ResultCode <> 0 then
+      RaiseException(
+        'wiredoor service install failed with exit code ' +
+        IntToStr(ResultCode)
+      );
+
+    RemoveLegacyUserInstall();
+  end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+    RemoveFromPath(HKLM,
+      'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
+      ExpandConstant('{app}'));
+end;
+
 function ServiceExists: Boolean;
 var
   ResultCode: Integer;
@@ -62,8 +208,100 @@ function WireGuardInstalled: Boolean;
 var
   ResultCode: Integer;
 begin
-  // Devuelve True si existe el servicio WireGuardManager (ajusta si en tu instalación cambia el nombre)
   Result :=
     Exec('sc.exe', 'query WireGuardManager', '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
     and (ResultCode = 0);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  DownloadPage: TDownloadWizardPage;
+  ResultCode: Integer;
+  InstallerPath: String;
+begin
+  Result := '';
+  NeedsRestart := False;
+
+  if IsWireGuardInstalled() then
+  begin
+    Log('WireGuard is already installed');
+    Exit;
+  end;
+
+  Log('WireGuard is missing. Downloading dependency');
+
+  DownloadPage := CreateDownloadPage(
+    'Installing dependencies',
+    'Downloading WireGuard...',
+    nil
+  );
+
+  try
+    DownloadPage.Clear;
+    DownloadPage.Add(
+      WireGuardUrl,
+      WireGuardFile,
+      ''
+    );
+
+    DownloadPage.Show;
+    try
+      DownloadPage.Download;
+    finally
+      DownloadPage.Hide;
+    end;
+
+    InstallerPath := ExpandConstant('{tmp}\') + WireGuardFile;
+
+    Log('Installing WireGuard');
+
+    if not Exec(
+      InstallerPath,
+      '/noprompt',
+      '',
+      SW_HIDE,
+      ewWaitUntilTerminated,
+      ResultCode
+    ) then
+    begin
+      Result := 'Could not start WireGuard installer';
+      Exit;
+    end;
+
+    if ResultCode = 3010 then
+    begin
+      NeedsRestart := True;
+      Result := 'WireGuard requires a system restart. ' +
+        'Restart Windows and run Wiredoor Setup again.';
+      Exit;
+    end;
+
+    if ResultCode <> 0 then
+    begin
+      Result := 'WireGuard installation failed: ' +
+        IntToStr(ResultCode);
+      Exit;
+    end;
+
+    if not IsWireGuardInstalled() then
+    begin
+      Result := 'WireGuard installation could not be verified';
+      Exit;
+    end;
+
+    Log('WireGuard installed successfully');
+
+    Exec(
+      ExpandConstant('{sys}\taskkill.exe'),
+      '/F /IM wireguard.exe',
+      '',
+      SW_HIDE,
+      ewWaitUntilTerminated,
+      ResultCode
+    );
+
+  except
+    Result := 'Failed to download or install WireGuard: ' +
+      GetExceptionMessage;
+  end;
 end;
