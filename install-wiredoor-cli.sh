@@ -35,7 +35,7 @@ detect_os() {
       alpine)
         echo "alpine"
         ;;
-      arch|manjaro)
+      arch|manjaro|omarchy)
         echo "archlinux"
         ;;
       *)
